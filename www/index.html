@@ -1,0 +1,165 @@
+<html>
+
+  <head>
+    <title>VRC OSC: Avril</title>
+    <script src="./socket.io/socket.io.js"></script>
+    <script src="/web/index.js" defer></script>
+  </head>
+
+  <body>
+    <h1>Avril</h1>
+    <hr>
+    <input id="0" oninput="slider(this)" type="range" min="0" max="100" step="1">VF40_TC_current_trackingMouth</input>
+    <br>
+    <input id="1" oninput="slider(this)" type="range" min="0" max="100" step="1">VF40_TC_current_trackingEyes</input>
+    <br>
+    <input id="2" oninput="slider(this)" type="range" min="0" max="100" step="1">VF40_TC_current_trackingRightFingers</input>
+    <br>
+    <input id="3" oninput="slider(this)" type="range" min="0" max="100" step="1">VF40_TC_current_trackingLeftFingers</input>
+    <br>
+    <input id="4" oninput="slider(this)" type="range" min="0" max="100" step="1">VF40_TC_current_trackingRightFoot</input>
+    <br>
+    <input id="5" oninput="slider(this)" type="range" min="0" max="100" step="1">VF40_TC_current_trackingLeftFoot</input>
+    <br>
+    <input id="6" oninput="slider(this)" type="range" min="0" max="100" step="1">VF40_TC_current_trackingHip</input>
+    <br>
+    <input id="7" oninput="slider(this)" type="range" min="0" max="100" step="1">VF40_TC_current_trackingRightHand</input>
+    <br>
+    <input id="8" oninput="slider(this)" type="range" min="0" max="100" step="1">VF40_TC_current_trackingLeftHand</input>
+    <br>
+    <input id="9" oninput="slider(this)" type="range" min="0" max="100" step="1">VF40_TC_current_trackingHead</input>
+    <br>
+    <input id="10" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">Go/VRModeProxy</input>
+    <br>
+    <button id="11" onclick="button(this)">Go/FloatEnd</button>
+    <br>
+    <input id="12" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">Go/HipDriftZ</input>
+    <br>
+    <input id="13" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">Go/HipDriftX</input>
+    <br>
+    <input id="14" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">Go/HipDriftY</input>
+    <br>
+    <input id="15" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">Go/FloatSave</input>
+    <br>
+    <button id="16" onclick="button(this)">Go/Action</button>
+    <br>
+    <input id="17" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">Go/ScaleSave</input>
+    <br>
+    <input id="18" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">Go/ScaleFloat</input>
+    <br>
+    <button id="19" onclick="button(this)">Go/JSRF/Timer</button>
+    <br>
+    <button id="20" onclick="button(this)">Go/Jump</button>
+    <br>
+    <button id="21" onclick="button(this)">Go/Scaling</button>
+    <br>
+    <button id="22" onclick="button(this)">Go/JSRF/ReadyToGrind</button>
+    <br>
+    <button id="23" onclick="button(this)">Go/Emote</button>
+    <br>
+    <input id="24" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_VRC Avatar Descriptor_trackingRightFingers</input>
+    <br>
+    <input id="25" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_VRC Avatar Descriptor_trackingLeftFingers</input>
+    <br>
+    <input id="26" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_VRC Avatar Descriptor_trackingRightFoot</input>
+    <br>
+    <input id="27" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_VRC Avatar Descriptor_trackingLeftFoot</input>
+    <br>
+    <input id="28" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_VRC Avatar Descriptor_trackingHip</input>
+    <br>
+    <input id="29" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_VRC Avatar Descriptor_trackingRightHand</input>
+    <br>
+    <input id="30" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_VRC Avatar Descriptor_trackingLeftHand</input>
+    <br>
+    <input id="31" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_VRC Avatar Descriptor_trackingHead</input>
+    <br>
+    <input id="32" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">Go/FloatFactor</input>
+    <br>
+    <button id="33" onclick="button(this)">Go/Mirror</button>
+    <br>
+    <button id="34" onclick="button(this)">Go/SVRB/Grounded</button>
+    <br>
+    <button id="35" onclick="button(this)">Go/Head</button>
+    <br>
+    <button id="36" onclick="button(this)">Go/Prone</button>
+    <br>
+    <button id="37" onclick="button(this)">Go/Crouch</button>
+    <br>
+    <button id="38" onclick="button(this)">Go/PosePlaySpace</button>
+    <br>
+    <button id="39" onclick="button(this)">Go/Pose</button>
+    <br>
+    <input id="40" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_FullControllerBuilder.Apply on Avatar Root_trackingMouth</input>
+    <br>
+    <input id="41" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_FullControllerBuilder.Apply on Avatar Root_trackingEyes</input>
+    <br>
+    <input id="42" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_FullControllerBuilder.Apply on Avatar Root_trackingRightFingers</input>
+    <br>
+    <input id="43" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_FullControllerBuilder.Apply on Avatar Root_trackingLeftFingers</input>
+    <br>
+    <input id="44" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_FullControllerBuilder.Apply on Avatar Root_trackingRightFoot</input>
+    <br>
+    <input id="45" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_FullControllerBuilder.Apply on Avatar Root_trackingLeftFoot</input>
+    <br>
+    <input id="46" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_FullControllerBuilder.Apply on Avatar Root_trackingHip</input>
+    <br>
+    <input id="47" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_FullControllerBuilder.Apply on Avatar Root_trackingRightHand</input>
+    <br>
+    <input id="48" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_FullControllerBuilder.Apply on Avatar Root_trackingLeftHand</input>
+    <br>
+    <input id="49" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">VF40_TC_FullControllerBuilder.Apply on Avatar Root_trackingHead</input>
+    <br>
+    <input id="50" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">Go/Height</input>
+    <br>
+    <input id="51" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">Go/PuppetY</input>
+    <br>
+    <input id="52" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">Go/PuppetX</input>
+    <br>
+    <button id="53" onclick="button(this)">Go/Swimming</button>
+    <br>
+    <input id="54" oninput="slider(this)" type="range" min="0" max="100" step="1">Go/ProneIdle</input>
+    <br>
+    <input id="55" oninput="slider(this)" type="range" min="0" max="100" step="1">Go/CrouchIdle</input>
+    <br>
+    <input id="56" oninput="slider(this)" type="range" min="0" max="100" step="1">Go/StandIdle</input>
+    <br>
+    <button id="57" onclick="button(this)">Go/Jump&Fall</button>
+    <br>
+    <button id="58" onclick="button(this)">Go/Locomotion</button>
+    <br>
+    <button id="59" onclick="button(this)">Go/Stationary</button>
+    <br>
+    <input id="60" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">Go/PoseRadial</input>
+    <br>
+    <input id="61" oninput="slider(this)" type="range" min="0" max="100" step="1">Go/VRCEmote</input>
+    <br>
+    <button id="62" onclick="button(this)">Go/Horizon</button>
+    <br>
+    <input id="63" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">Go/Float</input>
+    <br>
+    <input id="64" oninput="slider(this)" type="range" min="0" max="100" step="1">VRCEmote</input>
+    <br>
+    <button id="65" onclick="button(this)">Horns</button>
+    <br>
+    <button id="66" onclick="button(this)">Arm</button>
+    <br>
+    <input id="67" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">Hair Emm</input>
+    <br>
+    <input id="68" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">Hair black/white</input>
+    <br>
+    <input id="69" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">Skin Tone</input>
+    <br>
+    <input id="70" oninput="slider(this)" type="range" min="1e-3" max="99.999999" step="1e-6">HUE/Hue Shift</input>
+    <br>
+    <button id="71" onclick="button(this)">Hat</button>
+    <br>
+    <button id="72" onclick="button(this)">Shoes</button>
+    <br>
+    <button id="73" onclick="button(this)">Tail</button>
+    <br>
+    <button id="74" onclick="button(this)">Ears</button>
+    <br>
+    <button id="75" onclick="button(this)">Belts</button>
+  </body>
+
+</html>
