@@ -9,27 +9,24 @@ const pretty = require('pretty');
 const { merge } = require('lodash');
 const os = require('node:os');
 
-const PORT = 3000;
-const PORT_FORWARDING = false;
-const LOGGING = false;
-const USERID = "usr_5dcc94c8-eac8-4c7e-ab83-a0cec4d95fd3"; //REPLACE WITH YOUR USERNAME
-const username = os.userInfo().username;
-const oscDir = `C:/Users/${username}/AppData/LocalLow/VRChat/VRChat/OSC/${USERID}/Avatars/`; //future enable automatic dir detection between windows/linux
-const hostname = PORT_FORWARDING ? (async () => { return await fetch("https://api.ipify.org").then((response) => response.text()); })() : 'localhost';
+const CONFIG = JSON.parse(fs.readFileSync('./config.json', { encoding: 'utf-8' }));
+const USERNAME = os.userInfo().username;
+const OSC_DIR = `C:/Users/${USERNAME}/AppData/LocalLow/VRChat/VRChat/OSC/${CONFIG.USERID}/Avatars/`; //future enable automatic dir detection between windows/linux
+const HOSTNAME = CONFIG.PORT_FORWARDING ? (async () => { return await fetch("https://api.ipify.org").then((response) => response.text()); })() : 'localhost';
 
 const app = express();
 const HTTPServer = createServer(app);
 const IOServer = new Server(HTTPServer);
-const Avatar = {
+const avatar = {
     config: {},
     map: []
 }
 
 function LoadAvatar(filepath) { //handle default case
-    Avatar.config = fs.readFileSync(filepath, { encoding: 'utf-8' });
-    eval(`Avatar.config = ${Avatar.config}`);
-    Avatar.config.parameters.forEach((parameter) => parameter.input && (Avatar.map[parameter.input.address] = parameter.input.type));
-    return Avatar.config;
+    avatar.config = fs.readFileSync(filepath, { encoding: 'utf-8' });
+    eval(`avatar.config = ${avatar.config}`);
+    avatar.config.parameters.forEach((parameter) => parameter.input && (avatar.map[parameter.input.address] = parameter.input.type));
+    return avatar.config;
 }
 
 function CreateHTML(config) {
@@ -74,7 +71,8 @@ function CreateHTML(config) {
     var socket = io();
     socket.onAny((event, args) => {
         event == "update" && window.navigation.reload();
-        if (input = inputs.map[event], elem = document.getElementById(inputs.list.indexOf(event)))
+        let input = inputs.map[event], elem = document.getElementById(inputs.list.indexOf(event));
+        if (input && elem)
             input.type == "Bool" && (elem.style.backgroundColor = (input.value = args) ? "#00ff00" : "#ff0000"),
             input.type == "Int" && (elem.value = input.value = args),
             input.type == "Float" && (elem.value = input.value = args * 100);
@@ -104,15 +102,15 @@ function CreateHTML(config) {
 function handleMessage(msg) {
     p = msg.address;
     if (p == '/avatar/change') {
-        if (!LoadAvatar(oscDir + msg.value + '.json')) {
+        if (!LoadAvatar(OSC_DIR + msg.value + '.json')) {
             console.log("Couldn't load avatar config.");
             return;
         }
-        fs.writeFileSync('./www/avatar.json', JSON.stringify(Avatar.config), 'utf-8');
-        CreateHTML(Avatar.config), IOServer.emit('update');
+        fs.writeFileSync('./www/avatar.json', JSON.stringify(avatar.config), 'utf-8');
+        CreateHTML(avatar.config), IOServer.emit('update');
     }
-    if (p || Object.keys(Avatar.map).includes(msg.address)) {
-        LOGGING && console.log("VRChat -> Browser", [msg.address, msg.value]);
+    if (p || Object.keys(avatar.map).includes(msg.address)) {
+        CONFIG.LOGGING && console.log("VRChat -> Browser", [msg.address, msg.value]);
         IOServer.emit(msg.address, msg.value);
     }
 }
@@ -132,7 +130,7 @@ IOServer.on('connection', (socket) => {
     console.log('IOServer> Client connected at', socket.handshake.address)
     socket.onAny((address, args) => {
         let value = null, type = '';
-        switch (Avatar.map[address]) {
+        switch (avatar.map[address]) {
             case 'Bool':
                 value = Boolean(args), type = String(args);
                 break;
@@ -143,7 +141,7 @@ IOServer.on('connection', (socket) => {
                 value = parseFloat(args) / 100, type = 'float';
                 break;
         }
-        LOGGING && console.log('Browser -> VRChat: ', [address, value]);
+        CONFIG.LOGGING && console.log('Browser -> VRChat: ', [address, value]);
         OSCServer.send(toBuffer({
             address: address,
             args: [{ type: type, value: value, }],
@@ -154,4 +152,4 @@ IOServer.on('connection', (socket) => {
 
 OSCServer.once('listening', () => CreateHTML(LoadAvatar('./www/avatar.json')));
 OSCServer.bind(9001, () => console.log('OSCServer> bound on port 9000'));
-HTTPServer.listen(PORT, hostname);
+HTTPServer.listen(CONFIG.HTTP_PORT);

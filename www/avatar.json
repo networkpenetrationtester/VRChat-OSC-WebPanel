@@ -1,1 +1,29 @@
-{"id":"avtr_0","name":"Sample","hash":0,"parameters":[{"name":"Slider","output":{"address":"/avatar/parameters/Slider","type":"Float"}},{"name":"Button","output":{"address":"/avatar/parameters/Button","type":"Bool"}}]}
+{
+    "id": "avtr_0",
+    "name": "Sample",
+    "hash": 0,
+    "parameters": [
+        {
+            "name": "Slider",
+            "output": {
+                "address": "/avatar/parameters/Slider",
+                "type": "Float"
+            },
+            "input": {
+                "address": "/avatar/parameters/Slider",
+                "type": "Float"
+            }
+        },
+        {
+            "name": "Button",
+            "output": {
+                "address": "/avatar/parameters/Button",
+                "type": "Bool"
+            },
+            "input": {
+                "address": "/avatar/parameters/Button",
+                "type": "Bool"
+            }
+        }
+    ]
+}
