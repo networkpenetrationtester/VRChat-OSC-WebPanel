@@ -6,6 +6,7 @@ export interface $VRC_OSC_INTF_ARGS {
 }
 
 export type $VRC_OSC_INTERFACE_MATCH = { path: string, params: { [parameter: symbol | string]: string | string[] } } | false; // thank GOD i could decipher this bullshit
+
 export type $VRC_OSC_INTERFACE_MATCHER = (address: string) => $VRC_OSC_INTERFACE_MATCH; // thank GOD i could decipher this bullshit
 
 export interface $VRC_COOKIE_2FA_JWT_DATA {

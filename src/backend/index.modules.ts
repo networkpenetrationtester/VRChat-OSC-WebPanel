@@ -8,7 +8,7 @@ export function STDIO() { return rl.createInterface({ input: process.stdin, outp
 export function RemoveUTF8BOM(string: string) { return string.replaceAll('\ufeff', ''); }
 
 export function OSCInterfaceCBHelper(match: $VRC_OSC_INTERFACE_MATCH) {
-    if (!match) return; // blame path-to-regexp
+    if (!match) return new Map<string, any>(); // blame path-to-regexp
     const { params } = match;
     let map = new Map<string, any>();
     for (let kvp of Object.entries(params)) map.set(kvp[0], kvp[1]);

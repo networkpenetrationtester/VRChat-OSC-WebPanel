@@ -1,11 +1,11 @@
 import * as OSC from 'node-osc';
-import { CreateIOTypeMaps, LoadLastAvatar } from './index.modules.ts';
+import { CreateIOTypeMaps, LoadLastAvatar, OSCInterfaceCBHelper as TransformMatchToMap } from './index.modules.ts';
 import type { $VRC_AVI_STRUCTURE_IO_DATATYPE, $VRC_OSC_INTF_ARGS, $VRC_OSC_INTERFACE_MATCH, $VRC_OSC_INTERFACE_MATCHER } from './index.types.ts';
 import { match, type Match, type MatchFunction } from 'path-to-regexp';
 
 // TODO: superset this class to make it more generic...
 
-export type $VRC_OSC_INTF_MSG_CB = (src: VRC_OSC_INTERFACE, match: $VRC_OSC_INTERFACE_MATCH, ...data: any[]) => any;
+export type $VRC_OSC_INTF_MSG_CB = (src: VRC_OSC_INTERFACE, map: Map<string, any>, ...data: any[]) => any;
 
 export class VRC_OSC_INTERFACE {
     private init = false;
@@ -209,7 +209,8 @@ export class VRC_OSC_INTERFACE {
                     if (typeof callback !== 'string') {
                         for (let matcher_result of matcher_results) {
                             if (typeof matcher_result !== 'string') {
-                                callback(this, matcher_result, ...data);
+                                let map = TransformMatchToMap(matcher_result);
+                                callback(this, map, ...data);
                             }
                         }
                     }

@@ -1,5 +1,5 @@
 import { SERVER_ADDRESS, SERVER_PORT, CLIENT_ADDRESS, CLIENT_PORT, VRC_AVI_DATA_DIR, VRC_AVI_STRUCTURE_DIR } from './index.constants.ts';
-import { AvatarStructureLoader, AvatarDataLoader, CreateIOTypeMaps, SaveLastAvatar, OSCInterfaceCBHelper as OSCIntfMatchCleaner } from './index.modules.ts';
+import { AvatarStructureLoader, AvatarDataLoader, CreateIOTypeMaps, SaveLastAvatar, STDIO } from './index.modules.ts';
 import { type $VRC_OSC_INTF_MSG_CB, VRC_OSC_INTERFACE } from './index.osc_interface.ts';
 
 const osc_intf = new VRC_OSC_INTERFACE();
@@ -11,16 +11,27 @@ osc_intf.Create({
     CLIENT_PORT
 });
 
-const osc_logger: $VRC_OSC_INTF_MSG_CB = (src, match, ...values) => {
-    let params = OSCIntfMatchCleaner(match);
-    if (params) {
-        const path = params.get('path');
-        const axis = params.get('axis');
-        console.log(path, axis, ...values);
-    }
+const all_logger: $VRC_OSC_INTF_MSG_CB = (src, map, ...values) => {
+    const path = map.get('path');
+    console.log(`[VRChat => OSC_INTF] ${path} =>`, ...values);
+}
+
+const axis_logger: $VRC_OSC_INTF_MSG_CB = (src, map, ...values) => {
+    const path = map.get('path');
+    const axis = map.get('axis');
+    console.log(path, axis, ...values);
 };
 
-osc_intf.AddMessageListener('/avatar/parameters/{Angular|Velocity}:axis', osc_logger);
+// osc_intf.AddMessageListener('/avatar/parameters/Angular:axis', axis_logger);
+// osc_intf.AddMessageListener('/avatar/parameters/Velocity:axis', axis_logger);
+osc_intf.AddMessageListener('/*all', all_logger);
+
+const stdio = STDIO();
+
+stdio.on('line', (input => {
+    const [address, value] = input.split(' ');
+    osc_intf.TrySendValue(address, value);
+}));
 
 // const osc_avi_updater: $VRC_OSC_INTF_MSG_CB = (src, match, ...args) => {
 //     const [avi_id] = args;
