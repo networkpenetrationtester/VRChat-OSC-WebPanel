@@ -1,0 +1,7 @@
+{
+    "compilerOptions": {
+        "allowImportingTsExtensions": true,
+        "rewriteRelativeImportExtensions": true,
+        "outDir": "dist"
+    }
+}

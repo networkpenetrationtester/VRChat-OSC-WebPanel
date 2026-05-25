@@ -1,0 +1,13 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "type": "module",
+  "license": "MIT",
+  "dependencies": {
+    "@types/node": "^25.9.1",
+    "dotenv": "^17.4.2",
+    "node-osc": "^11.5.0",
+    "path-to-regexp": "^8.4.2"
+  }
+}

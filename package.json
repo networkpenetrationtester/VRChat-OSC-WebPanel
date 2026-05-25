@@ -1,0 +1,14 @@
+{
+  "private": "true",
+  "name": "vrc-osc-webpanel",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {},
+  "workspaces": [
+    "src/*"
+  ],
+  "dependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
