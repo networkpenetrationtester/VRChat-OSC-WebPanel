@@ -1,13 +1,29 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import rl from 'node:readline';
-import type { $VRC_AVI_STRUCTURE, $VRC_AVI_API_DATA, $VRC_AVI_STRUCTURE_IO_DATATYPE, $VRC_AVI_DATA, $VRC_OSC_INTERFACE_MATCH } from './index.types.ts';
+import type { $VRC_AVI_STRUCTURE, $VRC_AVI_API_DATA, $VRC_AVI_STRUCTURE_IO_DATATYPE, $VRC_AVI_DATA, $SIMPLE_PATH_TO_REGEXP_MATCH } from './index.types.ts';
+import lodash from 'lodash';
 
-export function STDIO() { return rl.createInterface({ input: process.stdin, output: process.stdout }) };
+export function FindExistingInstanceInSetOrMap<T>(obj_a: T, set: Set<T> | Map<any, T>): T | undefined {
+    for (let obj_b of set.values()) {
+        if (lodash.isEqual(obj_b, obj_a)) {
+            return obj_b;
+        }
+    }
+}
 
-export function RemoveUTF8BOM(string: string) { return string.replaceAll('\ufeff', ''); }
+export function STDIO() {
+    return rl.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+}
 
-export function OSCInterfaceCBHelper(match: $VRC_OSC_INTERFACE_MATCH) {
+export function RemoveUTF8BOM(string: string) {
+    return string.replaceAll('\ufeff', '');
+}
+
+export function PathToRegExpMatchToMap(match: $SIMPLE_PATH_TO_REGEXP_MATCH) {
     if (!match) return new Map<string, any>(); // blame path-to-regexp
     const { params } = match;
     let map = new Map<string, any>();

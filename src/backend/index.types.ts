@@ -1,13 +1,19 @@
+export type $SIMPLE_PATH_TO_REGEXP_MATCH = { path: string, params: { [parameter: symbol | string]: string | string[] } } | false; // thank GOD i could decipher this bullshit
+
+export interface $SIMPLE_PATH_TO_REGEXP_MATCHER {
+    (address: string): $SIMPLE_PATH_TO_REGEXP_MATCH;
+}
+
+export interface $VRC_LISTENERS_MSG_CB<T> {
+    (src: T, map: Map<string, any>, ...args: any[]): any
+}
+
 export interface $VRC_OSC_INTF_ARGS {
     SERVER_ADDRESS: string
     SERVER_PORT: number
     CLIENT_ADDRESS: string
     CLIENT_PORT: number
 }
-
-export type $VRC_OSC_INTERFACE_MATCH = { path: string, params: { [parameter: symbol | string]: string | string[] } } | false; // thank GOD i could decipher this bullshit
-
-export type $VRC_OSC_INTERFACE_MATCHER = (address: string) => $VRC_OSC_INTERFACE_MATCH; // thank GOD i could decipher this bullshit
 
 export interface $VRC_COOKIE_2FA_JWT_DATA {
     userId: string
