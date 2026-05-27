@@ -23,17 +23,20 @@ INTERFACE.Create({
 const logger: $VRC_OSC_INTF_MSG_CB = (_, map, values) => {
     const address = map.get('$address');
     console.log('[VRChat => OSC_INTF]', address, values);
+    INTERFACE.SendValue(address, values);
 }
 
 INTERFACE.AddMessageListener('/*_', logger);
 
 const stdio = STDIO();
 
-stdio.on('line', async (input) => {
-    const [address, value] = input.split(' ');
-    let acknowledged = await INTERFACE.SendValue(address, value); // also hopefully helps prevent stupid feedback loops...
-    console.log('ACK:', acknowledged);
-});
+INTERFACE.SendValue('test', 1, 2, 3);
+
+// stdio.on('line', async (input) => {
+//     const [address, ...values] = input.split(' ');
+//     let acknowledged = await INTERFACE.SendValue(address, ...values); // also hopefully helps prevent stupid feedback loops...
+//     console.log('ACK:', acknowledged);
+// });
 
 // const osc_avi_updater: $VRC_OSC_INTF_MSG_CB = (src, match, ...args) => {
 //     const [avi_id] = args;
