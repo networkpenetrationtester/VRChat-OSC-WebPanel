@@ -2,20 +2,23 @@ import * as OSC from 'node-osc';
 import { CreateIOTypeMaps, LoadLastAvatar } from './index.modules.ts';
 import type { $VRC_AVI_STRUCTURE_IO_DATATYPE, $VRC_OSC_INTF_ARGS } from './index.types.ts';
 import { MessageListeners } from './index.message_listeners.ts';
+import { MD5 } from 'object-hash';
+import { LazyMap } from './index.lazymap.ts';
 
 export class VRC_OSC_INTERFACE extends MessageListeners {
-    private init = false;
-    private last = LoadLastAvatar();
+    /* private */ init = false;
+    /* private */ last = LoadLastAvatar();
+    /* private */ server!: OSC.Server; // INTF <- VRC
+    /* private */ client!: OSC.Client; // INTF -> VRC
 
-    server!: OSC.Server; // INTF <- VRC
-    client!: OSC.Client; // INTF -> VRC
+    UNACKNOWLEDGED = new LazyMap<string, (value: boolean) => void>();
 
     CURRENT_AVI = {
         STRUCTURE: this.last?.structure,
         DATA: this.last?.data,
         TYPEMAPS: {
-            IN: new Map<string, $VRC_AVI_STRUCTURE_IO_DATATYPE>(),
-            OUT: new Map<string, $VRC_AVI_STRUCTURE_IO_DATATYPE>()
+            IN: new LazyMap<string, $VRC_AVI_STRUCTURE_IO_DATATYPE>(),
+            OUT: new LazyMap<string, $VRC_AVI_STRUCTURE_IO_DATATYPE>()
         }
     }
 
@@ -33,9 +36,11 @@ export class VRC_OSC_INTERFACE extends MessageListeners {
             console.log(`[OSC_INTF] Server listening on ${CONFIG.SERVER_ADDRESS}:${CONFIG.SERVER_PORT}...`);
         });
 
-        this.server.on('message', (args) => {
-            const [address, ...data] = args;
-            this.ProcessAddress(this, address, data);
+        this.server.on('message', (...args) => {
+            const [data, ...debug] = args;
+            const [address, ...values] = data;
+            this.HandleData(this, address, values);
+            this.UNACKNOWLEDGED.size > 0 && this.SetAcknowledged(address, values);
         });
 
         this.server.on('close', () => this.init = false);
@@ -45,79 +50,99 @@ export class VRC_OSC_INTERFACE extends MessageListeners {
 
     Destroy() {
         if (!this.init) return console.log(`[OSC_INTF] Interface not init....`);
-
         this.server.close();
         this.client
         this.init = false;
     }
 
-    TrySendValue(address: string, value: any) {
-        // if (!this.server_connected) return console.log(`[OSC_INTF] Server not connected....`);
-        try {
-            if (!value) return console.log(`[OSC_INTF => VRChat] Sender did nothing (input empty)`);
+    SetAcknowledged(address: string, values: any[]) {
+        let obj = { address, value: values };
+        let obj_hash = MD5(obj);
+        let resolve = this.UNACKNOWLEDGED.get(obj_hash);
+        resolve?.(true) && this.UNACKNOWLEDGED.delete(obj_hash);
+    }
 
-            value = value.toString();
+    SetUnacknowledged(address: string, values: any[], resolve: (value: boolean) => void) {
+        let obj = { address, value: values };
+        let obj_hash = MD5(obj);
+        this.UNACKNOWLEDGED.set(obj_hash, resolve);
+        return this.UNACKNOWLEDGED;
+    }
 
-            if (!this.CURRENT_AVI.TYPEMAPS.IN.has(address)) {
-                console.log(`[OSC_INTF => VRChat] Sender trying to send ${value} => ${address} (typemap doesn't contain address)`);
+    TryParse(...values: any[]) { // TODO: typegaurd?
+        return values.map(value => {
+            try {
+                value = value.toString();
 
                 const try_int = parseInt(value);
-                if (!isNaN(try_int) && try_int.toString() === value) return this.client.send(address, try_int);
+                if (!isNaN(try_int) && try_int.toString() === value) return try_int;
 
                 const try_float = parseFloat(value);
-                if (!isNaN(try_float) && try_float.toString() === value) return this.client.send(address, try_float);
+                if (!isNaN(try_float)) return Math.fround(try_float);
 
                 const try_bool = ({ 'true': 1, 'false': 0 } as { [key: string]: number | undefined })[value];
-                if (try_bool != undefined) return this.client.send(address, try_bool);
-
-                console.log(`[OSC_INTF => VRChat] Sender still trying to send ${value} => ${address} (typemap doesn't contain address & failed to parse value)`);
-                return this.client.send(address, value);
+                return try_bool ?? false;
+            } catch (e) {
+                return;
             }
+        }).filter(value => value !== null && value !== undefined);
+    }
 
-            const datatype = this.CURRENT_AVI.TYPEMAPS.IN.get(address);
+    async SendValue(address: string, ...values: any[]): Promise<boolean> {
+        values = this.TryParse(...values);
+        if (!values) return false;
 
-            switch (datatype) {
-                case 'Bool': {
-                    const try_bool = ({ 'true': 1, 'false': 0, '1': 1, '0': 1 } as { [key: string]: number | undefined })[value];
+        console.log(`[OSC_INTF => VRChat]`, address, values);
 
-                    if (try_bool != undefined) return this.client.send(address, try_bool);
+        if (this.UNACKNOWLEDGED.size > 256) console.log(`Buffer size exceeded 256, dropping last value: ${JSON.stringify(this.UNACKNOWLEDGED.pop())}`);
 
-                    console.log(`[OSC_INTF => VRChat] Sender aborted send ${value} => ${address} (typemap contains address & value is not a Bool)`);
-                    break;
-                }
+        await this.client.send(address, ...values);
 
-                case 'Int': {
-                    const try_int = parseInt(value);
-
-                    if (!isNaN(try_int) && try_int.toString() === value) {
-                        this.client.send(address, try_int);
-                        return true;
-                    }
-
-                    console.log(`[OSC_INTF => VRChat] Sender aborted send ${value} => ${address} (typemap contains address & value is not a Int)`);
-                    break;
-                }
-
-                case 'Float': {
-                    const try_float = parseFloat(value);
-
-                    if (!isNaN(try_float) && try_float.toString() === value) {
-                        this.client.send(address, try_float); // need some kinda nudge sometimes idk how vrchat floats fucking work sometimes they're discarded entirely, need min/max value range like 0.01274362543 for 0 and 0.9997888783 for 1
-                        return true;
-                    }
-
-                    console.log(`[OSC_INTF => VRChat] Sender aborted send ${value} => ${address} (typemap contains address & value is not a Float)`);
-                    break;
-                }
-
-                default: {
-                    console.log(`[OSC_INTF => VRChat] Sender aborted send ${value} => ${address} (unknown datatype ${datatype})`);
-                }
-            }
-        } catch (e) {
-            console.error(e);
-        }
-
-        return false;
+        return new Promise<boolean>(resolve => {
+            this.SetUnacknowledged(address, values, resolve);
+            setTimeout(() => resolve(false), 1000); // 100 ms for you MAX.
+        });
     }
 }
+
+//     switch (datatype) {
+//         case 'Bool': {
+//             const try_bool = ({ 'true': 1, 'false': 0, '1': 1, '0': 1 } as { [key: string]: number | undefined })[values];
+
+//             if (try_bool != undefined) return this.client.send(address, try_bool);
+
+//             console.log(`[OSC_INTF => VRChat] Sender aborted send ${values} => ${address} (typemap contains address & value is not a Bool)`);
+//             break;
+//         }
+
+//         case 'Int': {
+//             const try_int = parseInt(values);
+
+//             if (!isNaN(try_int) && try_int.toString() === values) {
+//                 this.client.send(address, try_int);
+//                 return true;
+//             }
+
+//             console.log(`[OSC_INTF => VRChat] Sender aborted send ${values} => ${address} (typemap contains address & value is not a Int)`);
+//             break;
+//         }
+
+//         case 'Float': {
+//             const try_float = parseFloat(values);
+
+//             if (!isNaN(try_float) && try_float.toString() === values) {
+//                 this.client.send(address, try_float); // need some kinda nudge sometimes idk how vrchat floats fucking work sometimes they're discarded entirely, need min/max value range like 0.01274362543 for 0 and 0.9997888783 for 1
+//                 return true;
+//             }
+
+//             console.log(`[OSC_INTF => VRChat] Sender aborted send ${values} => ${address} (typemap contains address & value is not a Float)`);
+//             break;
+//         }
+
+//         default: {
+//             console.log(`[OSC_INTF => VRChat] Sender aborted send ${values} => ${address} (unknown datatype ${datatype})`);
+//         }
+//     }
+// } catch(e) {
+//     console.error(e);
+// }

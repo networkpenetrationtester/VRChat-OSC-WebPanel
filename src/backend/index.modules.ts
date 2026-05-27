@@ -2,15 +2,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import rl from 'node:readline';
 import type { $VRC_AVI_STRUCTURE, $VRC_AVI_API_DATA, $VRC_AVI_STRUCTURE_IO_DATATYPE, $VRC_AVI_DATA, $SIMPLE_PATH_TO_REGEXP_MATCH } from './index.types.ts';
-import lodash from 'lodash';
+import { LazyMap } from './index.lazymap.ts';
 
-export function FindExistingInstanceInSetOrMap<T>(obj_a: T, set: Set<T> | Map<any, T>): T | undefined {
-    for (let obj_b of set.values()) {
-        if (lodash.isEqual(obj_b, obj_a)) {
-            return obj_b;
-        }
-    }
-}
+// import lodash from 'lodash';
+
+// export function FindExistingInstanceInSetOrMap<T>(obj_a: T, set: Set<T> | Map<any, T>): T | undefined {
+//     for (let obj_b of set.values()) {
+//         if (lodash.isEqual(obj_b, obj_a)) {
+//             return obj_b;
+//         }
+//     }
+// }
 
 export function STDIO() {
     return rl.createInterface({
@@ -24,11 +26,10 @@ export function RemoveUTF8BOM(string: string) {
 }
 
 export function PathToRegExpMatchToMap(match: $SIMPLE_PATH_TO_REGEXP_MATCH) {
-    if (!match) return new Map<string, any>(); // blame path-to-regexp
-    const { params } = match;
-    let map = new Map<string, any>();
-    for (let kvp of Object.entries(params)) map.set(kvp[0], kvp[1]);
-    map.set('path', match.path);
+    let map = new LazyMap<string, any>();
+    if (!match) return map; // blame path-to-regexp
+    map.set('$address', match.path);
+    for (let kvp of Object.entries(match.params)) map.set(...kvp);
     return map;
 }
 
@@ -79,8 +80,8 @@ export function SaveLastAvatar(data: $VRC_AVI_DATA, structure: $VRC_AVI_STRUCTUR
 }
 
 export function CreateIOTypeMaps(vrc_avi_structure: $VRC_AVI_STRUCTURE) {
-    let IN = new Map<string, $VRC_AVI_STRUCTURE_IO_DATATYPE>();
-    let OUT = new Map<string, $VRC_AVI_STRUCTURE_IO_DATATYPE>();
+    let IN = new LazyMap<string, $VRC_AVI_STRUCTURE_IO_DATATYPE>();
+    let OUT = new LazyMap<string, $VRC_AVI_STRUCTURE_IO_DATATYPE>();
 
     for (let parameter of vrc_avi_structure.parameters) {
         parameter.input && IN.set(parameter.input.address, parameter.input.type);
@@ -91,8 +92,8 @@ export function CreateIOTypeMaps(vrc_avi_structure: $VRC_AVI_STRUCTURE) {
 }
 
 export async function GetAvatarDetails(avi_id: string, cookie: { auth?: string, twoFactorAuth?: string }, getListingData = false): Promise<$VRC_AVI_API_DATA | undefined> {
-    if (!cookie.auth) { console.error(`auth not specified`); return; }
-    if (!cookie.twoFactorAuth) { console.error(`twoFactorAuth not specified`); return; }
+    if (!cookie.auth) { console.error('auth not specified'); return; }
+    if (!cookie.twoFactorAuth) { console.error('twoFactorAuth not specified, continuing...'); }
 
     try {
         return await fetch(`https://api.vrchat.cloud/api/1/avatars/${avi_id}?getListingData=${getListingData}`, {
@@ -108,12 +109,11 @@ export async function GetAvatarDetails(avi_id: string, cookie: { auth?: string, 
                 'sec-fetch-dest': 'empty',
                 'sec-fetch-mode': 'cors',
                 'sec-fetch-site': 'same-origin',
-                'cookie': `auth=${cookie.auth}; twoFactorAuth=${cookie.twoFactorAuth}`,
+                'cookie': `auth=${cookie.auth};${cookie.twoFactorAuth ? ' twoFactorAuth=' + cookie.twoFactorAuth : ''}`,
                 'Referer': `https://vrchat.com/home/avatar/${avi_id}`,
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36' // TODO: make funny :3
             },
-            "body": null,
-            "method": "GET"
+            'method': 'GET'
         }).then(r => r.json());
     } catch (e) {
         console.error(e);

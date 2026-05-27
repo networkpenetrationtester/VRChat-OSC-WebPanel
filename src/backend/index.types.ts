@@ -1,11 +1,16 @@
-export type $SIMPLE_PATH_TO_REGEXP_MATCH = { path: string, params: { [parameter: symbol | string]: string | string[] } } | false; // thank GOD i could decipher this bullshit
+interface $SIMPLE_PATH_TO_REGEXP_MATCH_SUCCESS {
+    path: string
+    params: { [parameter: symbol | string]: string | string[] }
+}
+
+export type $SIMPLE_PATH_TO_REGEXP_MATCH = $SIMPLE_PATH_TO_REGEXP_MATCH_SUCCESS | false; // thank GOD i could decipher this bullshit
 
 export interface $SIMPLE_PATH_TO_REGEXP_MATCHER {
     (address: string): $SIMPLE_PATH_TO_REGEXP_MATCH;
 }
 
-export interface $VRC_LISTENERS_MSG_CB<T> {
-    (src: T, map: Map<string, any>, ...args: any[]): any
+export interface $MESSAGE_LISTENERS_CB<T> {
+    (src: T, map: Map<string, any>, ...data: any[]): any
 }
 
 export interface $VRC_OSC_INTF_ARGS {
