@@ -10,6 +10,7 @@ export const SERVER_ADDRESS = env.server_address ?? 'localhost';
 export const SERVER_PORT = Number(env.server_port ?? '9001');
 export const CLIENT_ADDRESS = env.client_address ?? 'localhost';
 export const CLIENT_PORT = Number(env.client_port ?? '9000');
+export const LOGGING = env.logging === 'true';
 
 const HOME_DIR = os.homedir();
 const VRC_DIR = path.join(HOME_DIR, 'AppData', 'LocalLow', 'VRChat', 'VRChat'); // TODO: determine OS platform and corresponding DIRs automatically

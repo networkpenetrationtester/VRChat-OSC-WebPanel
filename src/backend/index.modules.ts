@@ -17,16 +17,25 @@ import { LazyMap } from './index.lazymap.ts';
 export function TryParse(...values: any[]) { // TODO: typegaurd?
     return values.map(value => {
         try {
-            value = value.toString();
+            if (value) {
+                let stringified = value.toString();
 
-            const try_int = parseInt(value);
-            if (!isNaN(try_int) && try_int.toString() === value) return try_int;
+                switch (stringified) {
+                    case 'i':
+                        break;
+                    case 'f':
+                        
+                }
 
-            const try_float = parseFloat(value);
-            if (!isNaN(try_float)) return Math.fround(try_float);
+                const try_int = parseInt(stringified);
+                if (!isNaN(try_int) && try_int.toString() === value) return try_int;
 
-            const try_bool = ({ 'true': 1, 'false': 0 } as { [key: string]: number | undefined })[value];
-            return try_bool ?? false;
+                const try_float = parseFloat(stringified);
+                if (!isNaN(try_float)) return Math.fround(try_float);
+
+                const try_bool = ({ 'true': 1, 'false': 0 } as { [key: string]: number | undefined })[stringified];
+                return try_bool ?? false;
+            }
         } catch (e) {
             return;
         }
