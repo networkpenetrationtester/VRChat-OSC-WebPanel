@@ -14,12 +14,13 @@ INTERFACE.Create({
     CLIENT_PORT
 });
 
-// const test: $VRC_OSC_INTF_MSG_CB = (_, map, values) => {
-//     const address = map.get('$address');
-//     console.log('[VRChat => OSC_INTF]', address, values);
-// }
+const test: $VRC_OSC_INTF_MSG_CB = (_, map, values) => {
+    const address = map.get('$address');
+    const axis = map.get('axis');
+    // console.log('[VRChat => OSC_INTF]', 'Velocity', axis, values);
+}
 
-// INTERFACE.AddMessageListener('/*_', test);
+INTERFACE.AddMessageListener('/avatar/parameters/Velocity:axis', test);
 
 const stdio = STDIO();
 

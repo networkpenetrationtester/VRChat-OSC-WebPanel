@@ -4,27 +4,21 @@ import rl from 'node:readline';
 import type { $VRC_AVI_STRUCTURE, $VRC_AVI_API_DATA, $VRC_AVI_STRUCTURE_IO_DATATYPE, $VRC_AVI_DATA, $SIMPLE_PATH_TO_REGEXP_MATCH } from './index.types.ts';
 import { LazyMap } from './index.lazymap.ts';
 
-// import lodash from 'lodash';
-
-// export function FindExistingInstanceInSetOrMap<T>(obj_a: T, set: Set<T> | Map<any, T>): T | undefined {
-//     for (let obj_b of set.values()) {
-//         if (lodash.isEqual(obj_b, obj_a)) {
-//             return obj_b;
-//         }
-//     }
-// }
-
-export function TryParse(...values: any[]) { // TODO: typegaurd?
+export function TryParse(...values: any[]) { // TODO: definitive types & best effort
     return values.map(value => {
         try {
             if (value) {
-                let stringified = value.toString();
-
-                switch (stringified) {
+                let stringified = new String(value).toString();
+                let [v, flag] = [stringified.slice(0, -1), stringified.at(stringified.length - 1)];
+                switch (flag) {
                     case 'i':
-                        break;
+                        return parseInt(stringified);
                     case 'f':
-                        
+                        return Math.fround(parseFloat(stringified) + Math.random() / 1000); // Integers that make it through are problematic
+                    case 'b':
+                        return v === 'true' ? 1 : 0;
+                    default:
+                        console.log(`[TryParse] Could not discern type of ${v}, falling back to best effort...`);
                 }
 
                 const try_int = parseInt(stringified);
@@ -33,8 +27,8 @@ export function TryParse(...values: any[]) { // TODO: typegaurd?
                 const try_float = parseFloat(stringified);
                 if (!isNaN(try_float)) return Math.fround(try_float);
 
-                const try_bool = ({ 'true': 1, 'false': 0 } as { [key: string]: number | undefined })[stringified];
-                return try_bool ?? false;
+                const try_bool = stringified === 'true' ? 1 : 0;
+                return try_bool;
             }
         } catch (e) {
             return;
@@ -92,8 +86,6 @@ export function AvatarDataLoader(VRC_AVI_DATA_DIR: string, avi_id: string): $VRC
         return;
     }
 }
-
-// TODO: AvatarDataLoader
 
 export function LoadLastAvatar(): { data: $VRC_AVI_DATA, structure: $VRC_AVI_STRUCTURE } | undefined {
     try {

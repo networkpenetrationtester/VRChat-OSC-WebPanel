@@ -1,9 +1,17 @@
-interface $SIMPLE_PATH_TO_REGEXP_MATCH_SUCCESS {
-    path: string
-    params: { [parameter: symbol | string]: string | string[] }
+export interface $PMC_OBJ {
+    pattern: string
+    matcher: $SIMPLE_PATH_TO_REGEXP_MATCHER
+    callback: $MESSAGE_LISTENERS_CB<any>
 }
 
-export type $SIMPLE_PATH_TO_REGEXP_MATCH = $SIMPLE_PATH_TO_REGEXP_MATCH_SUCCESS | false; // thank GOD i could decipher this bullshit
+interface $SIMPLE_PATH_TO_REGEXP_MATCH_SUCCESS {
+    path: string
+    params: {
+        [parameter: symbol | string]: string | string[]
+    }
+}
+
+export type $SIMPLE_PATH_TO_REGEXP_MATCH = $SIMPLE_PATH_TO_REGEXP_MATCH_SUCCESS | false;
 
 export interface $SIMPLE_PATH_TO_REGEXP_MATCHER {
     (address: string): $SIMPLE_PATH_TO_REGEXP_MATCH;

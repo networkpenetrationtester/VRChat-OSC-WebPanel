@@ -16,8 +16,8 @@ export class LazyMap<K, V> extends Map<K, V> {
     }
 
     trySet(key: K, value: V) {
-        let v = this.get(key);
-        ((v ??= value) === value) && this.set(key, v);
+        let prev_value = this.get(key);
+        (prev_value ??= value) === value && this.set(key, prev_value);
         return this;
     }
 
@@ -27,8 +27,8 @@ export class LazyMap<K, V> extends Map<K, V> {
     }
 
     trySetAndReturnValue(key: K, value: V): V {
-        let v = this.get(key);
-        ((v ??= value) === value) && this.set(key, v);
-        return v;
+        let prev_value = this.get(key);
+        (prev_value ??= value) === value && this.set(key, prev_value);
+        return prev_value;
     }
 }

@@ -1,16 +1,8 @@
-import { match } from 'path-to-regexp';
-import type { $SIMPLE_PATH_TO_REGEXP_MATCH, $SIMPLE_PATH_TO_REGEXP_MATCHER, $MESSAGE_LISTENERS_CB } from './index.types.ts';
+import type { $SIMPLE_PATH_TO_REGEXP_MATCH, $SIMPLE_PATH_TO_REGEXP_MATCHER, $MESSAGE_LISTENERS_CB, $PMC_OBJ } from './index.types.ts';
 import { PathToRegExpMatchToMap } from './index.modules.ts';
 import { LazyMap } from './index.lazymap.ts';
+import { match as createMatcher } from 'path-to-regexp';
 import { MD5 } from 'object-hash';
-
-// TODO: HASHES...
-
-interface $PMC_OBJ {
-    pattern: string
-    matcher: $SIMPLE_PATH_TO_REGEXP_MATCHER
-    callback: $MESSAGE_LISTENERS_CB<any>
-}
 
 export class MessageListeners {
     private pmc_by_hash = new LazyMap<string, $PMC_OBJ>();
@@ -46,7 +38,7 @@ export class MessageListeners {
     }
 
     AddMessageListener(pattern: string, callback: $MESSAGE_LISTENERS_CB<any>) {
-        let matcher = this.matcher_by_pattern.get(pattern) ?? this.matcher_by_pattern.setAndReturnValue(pattern, match(pattern));
+        let matcher = this.matcher_by_pattern.get(pattern) ?? this.matcher_by_pattern.setAndReturnValue(pattern, createMatcher(pattern));
 
         let ref_pmc = { pattern, matcher, callback };
         let ref_hash = MD5(ref_pmc);
@@ -58,7 +50,7 @@ export class MessageListeners {
 
             for (let address of this.known_addresses) {
                 let pmc_checks = this.pmc_checks_by_address.get(address);
-                if (!pmc_checks) throw new Error(`this should never be undefined (I'm lazy)`);
+                pmc_checks ??= [];
                 pmc_checks.push(pmc);
                 this.pmc_checks_by_address.set(address, pmc_checks);
             }
@@ -67,7 +59,7 @@ export class MessageListeners {
 
     RemoveMessageListener(pattern: string, callback: $MESSAGE_LISTENERS_CB<any>) {
         let matcher = this.matcher_by_pattern.get(pattern);
-        if (!matcher) return; // this pattern was never used before
+        if (!matcher) return;
 
         let ref_pmc = { pattern, matcher, callback };
         let ref_hash = MD5(ref_pmc);
@@ -95,10 +87,8 @@ export class MessageListeners {
         return this.pmc_by_hash.values().toArray().map(pmc => ({ pattern: pmc.pattern, callback: pmc.callback }));
     }
 
-    GetMessageListenersByaddress(address: string) {
-        return (this.pmc_cache_by_address.get(address)?.map(([pmc_hash]) => {
-            let pmc = this.pmc_by_hash.get(pmc_hash); if (pmc) return { pattern: pmc.pattern, callback: pmc.callback };
-        }) ?? []) as Array<{ pattern: string, callback: $MESSAGE_LISTENERS_CB<any> }>;
+    GetMessageListenersByAddress(target_address: string) {
+        return (this.pmc_cache_by_address.get(target_address)?.map(([pmc_hash]) => { let pmc = this.pmc_by_hash.get(pmc_hash); if (pmc) return { pattern: pmc.pattern, callback: pmc.callback }; }) ?? []) as Array<{ pattern: string, callback: $MESSAGE_LISTENERS_CB<any> }>;
     }
 
     GetMessageListenersByPattern(target_pattern: string) {
