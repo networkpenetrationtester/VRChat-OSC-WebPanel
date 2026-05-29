@@ -1,8 +1,12 @@
 {
     "compilerOptions": {
-        "allowImportingTsExtensions": true,
-        "rewriteRelativeImportExtensions": true,
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "declaration": true,
         "outDir": "dist",
-        "noImplicitAny": true
+        "rootDir": "src",
+        "strict": true,
+        "skipLibCheck": true,
+        "esModuleInterop": true
     }
 }

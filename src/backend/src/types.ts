@@ -1,0 +1,150 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+// **************************** PATHTOREGEXP **************************** //
+
+export interface $PathToRegExpMatch {
+    path: string
+    params: Record<string | symbol, string | string[]>
+}
+
+export type $PathToRegExpResult = $PathToRegExpMatch | false;
+
+export interface $PathToRegExpMatcher {
+    (address: string): $PathToRegExpResult
+}
+
+// **************************** PATHTOREGEXP **************************** //
+
+// **************************** MESSAGELISTENER **************************** //
+
+export interface $MessageListenerCallback<C> {
+    (src: C, map: Map<string, string | string[]>, ...data: unknown[]): unknown
+}
+
+export interface $MessageListenerPMCObject {
+    pattern: string
+    matcher: $PathToRegExpMatcher
+    callback: $MessageListenerCallback<any>
+}
+
+// **************************** MESSAGELISTENER **************************** //
+
+// **************************** OSC INTERFACE  **************************** //
+
+export interface $VRChatOSCInterfaceArguments {
+    SERVER_ADDRESS: string
+    SERVER_PORT: number
+    CLIENT_ADDRESS: string
+    CLIENT_PORT: number
+}
+
+// **************************** OSC INTERFACE  **************************** //
+
+// **************************** AVATAR STRUCTURE **************************** //
+
+export type $VRChatAvatarStructureIODatatype = 'Int' | 'Bool' | 'Float';
+
+export interface $VRChatAvatarStructureIO {
+    address: string
+    type: $VRChatAvatarStructureIODatatype,
+    writable?: boolean
+}
+
+export interface $VRChatAvatarStructureParameter {
+    name: string
+    input?: $VRChatAvatarStructureIO
+    output?: $VRChatAvatarStructureIO
+}
+
+export interface $VRChatAvatarStructure {
+    id: string
+    name: string
+    hash: number
+    parameters: $VRChatAvatarStructureParameter[]
+}
+
+// **************************** AVATAR STRUCTURE **************************** //
+
+// **************************** AVATAR DATA **************************** //
+
+export interface $VRChatAvatarDataParameter {
+    name: string
+    value: number
+}
+
+export interface $VRChatAvatarData {
+    eyeHeight: number
+    legacyFingers: boolean
+    animationParameters: $VRChatAvatarDataParameter[]
+}
+
+// **************************** AVATAR DATA **************************** //
+
+// **************************** VRCHAT AVATAR API **************************** //
+
+export interface $VRChatAPICookie2FAData {
+    userId: string
+    macAddress: string
+    timestamp: number
+    version: number
+    iat: number
+    exp: number
+    aud: string
+    iss: string
+}
+
+export type $VRChatAPIAvatarUnityPackagePerformance = 'Excellent' | 'Good' | 'Medium' | 'Poor' | 'VeryPoor';
+export type $VRChatAPIAvatarUnityPackagePlatform = 'android' | 'ios' | 'standalonewindows';
+
+export interface $VRChatAPIAvatarUnityPackageShared {
+    'assetVersion': number
+    'created_at': string // timestamp
+    'id': string
+    'platform': $VRChatAPIAvatarUnityPackagePlatform
+    'unityVersion': string
+}
+
+export interface $VRChatAPIAvatarUnityPackageSecurity extends $VRChatAPIAvatarUnityPackageShared {
+    'performanceRating': $VRChatAPIAvatarUnityPackagePerformance
+    'scanStatus': string // passed | failed idk
+    'variant': 'security'
+}
+
+export interface $VRChatAPIAvatarUnityPackageImpostor extends $VRChatAPIAvatarUnityPackageShared {
+    'impostorizerVersion': string
+    'variant': 'impostor'
+}
+
+export interface $VRChatAPIAvatarData {
+    'attribution': unknown // idk
+    'authorId': string
+    'authorName': string
+    'created_at': string // timestamp
+    'description': string
+    'featured': boolean
+    'id': string
+    'imageUrl': string
+    'listingDate': string // timestamp ?
+    'name': string
+    'performance': {
+        'android': $VRChatAPIAvatarUnityPackagePerformance
+        'android-sort': number // 0 | 1 ?
+        'standalonewindows': $VRChatAPIAvatarUnityPackagePerformance
+        'standalonewindows-sort': number // 0 | 1 ?
+    }
+    'releaseStatus': string // 'public' | 'private' ?
+    'searchable': boolean
+    'styles': {
+        'primary': unknown // idk
+        'secondary': unknown // idk
+    }
+    'tags': unknown[] // idk
+    'thumbnailImageUrl': string
+    'unityPackageUrl': string
+    'unityPackageUrlObject': {} // idk
+    'unityPackages': ($VRChatAPIAvatarUnityPackageSecurity | $VRChatAPIAvatarUnityPackageSecurity)[]
+    'updated_at': string // timestamp
+    'version': number
+}
+
+// **************************** VRCHAT AVATAR API **************************** //

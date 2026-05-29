@@ -1,14 +1,17 @@
 {
-  "private": "true",
   "name": "vrchat-osc-webpanel",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.ts",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "backend": "cd src/backend && yarn dev",
+    "frontend": "cd src/frontend && yarn dev"
+  },
   "workspaces": [
     "src/*"
   ],
   "dependencies": {
+    "@types/node": "^25.9.1",
     "concurrently": "^9.2.1"
   }
 }

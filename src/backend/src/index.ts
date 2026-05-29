@@ -1,11 +1,11 @@
-import { SERVER_ADDRESS, SERVER_PORT, CLIENT_ADDRESS, CLIENT_PORT, VRC_AVI_STRUCTURE_DIR, VRC_AVI_DATA_DIR, LOGGING } from './index.constants.ts';
-import { STDIO, AvatarStructureLoader, AvatarDataLoader, CreateIOTypeMaps, SaveLastAvatar } from './index.modules.ts';
-import { VRC_OSC_INTERFACE } from './index.osc_interface.ts';
-import type { $MESSAGE_LISTENERS_CB } from './index.types.ts';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { ReadLineOptions } from 'readline';
+import { SERVER_ADDRESS, SERVER_PORT, CLIENT_ADDRESS, CLIENT_PORT, VRC_AVI_STRUCTURE_DIR, VRC_AVI_DATA_DIR, LOGGING } from './constants';
+import { STDIO, AvatarStructureLoader, AvatarDataLoader, CreateIOTypeMaps, SaveLastAvatar } from './modules';
+import { VRChatOSCInterface } from './osc_interface';
+import type { $VRChatOSCInterfaceMessageCallback } from './osc_interface';
 
-type $VRC_OSC_INTF_MSG_CB = $MESSAGE_LISTENERS_CB<VRC_OSC_INTERFACE>;
-
-const INTERFACE = new VRC_OSC_INTERFACE();
+const INTERFACE = new VRChatOSCInterface();
 
 INTERFACE.Create({
     SERVER_ADDRESS,
@@ -14,7 +14,7 @@ INTERFACE.Create({
     CLIENT_PORT
 });
 
-const test: $VRC_OSC_INTF_MSG_CB = (_, map, values) => {
+const test: $VRChatOSCInterfaceMessageCallback = (src, map, ...values) => {
     const address = map.get('$address');
     const axis = map.get('axis');
     // console.log('[VRChat => OSC_INTF]', 'Velocity', axis, values);
@@ -22,12 +22,13 @@ const test: $VRC_OSC_INTF_MSG_CB = (_, map, values) => {
 
 INTERFACE.AddMessageListener('/avatar/parameters/Velocity:axis', test);
 
-const stdio = STDIO();
+const stdio = STDIO({
+    terminal: true
+} as ReadLineOptions);
 
 stdio.on('line', async (input) => {
     const [address, ...values] = input.split(' ');
-    let acknowledged = await INTERFACE.SendValue(address, ...values); // also hopefully helps prevent stupid feedback loops...
-    console.log('ACK:', acknowledged);
+    await INTERFACE.SendValueAcknowledged(address, ...values);
 });
 
 // const osc_avi_updater: $VRC_OSC_INTF_MSG_CB = (src, match, ...args) => {

@@ -1,24 +1,25 @@
-import type { $SIMPLE_PATH_TO_REGEXP_MATCH, $SIMPLE_PATH_TO_REGEXP_MATCHER, $MESSAGE_LISTENERS_CB, $PMC_OBJ } from './index.types.ts';
-import { PathToRegExpMatchToMap } from './index.modules.ts';
-import { LazyMap } from './index.lazymap.ts';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { $PathToRegExpResult, $PathToRegExpMatcher, $MessageListenerCallback, $MessageListenerPMCObject } from './types';
+import { PathToRegExpMatchToMap } from './modules';
+import { LazyMap } from './lazymap';
 import { match as createMatcher } from 'path-to-regexp';
 import { MD5 } from 'object-hash';
 
 export class MessageListeners {
-    private pmc_by_hash = new LazyMap<string, $PMC_OBJ>();
-    private matcher_by_pattern = new LazyMap<string, $SIMPLE_PATH_TO_REGEXP_MATCHER>();
+    private pmc_by_hash = new LazyMap<string, $MessageListenerPMCObject>();
+    private matcher_by_pattern = new LazyMap<string, $PathToRegExpMatcher>();
     private known_addresses = new Array<string>();
-    private pmc_checks_by_address = new LazyMap<string, Array<$PMC_OBJ>>();
-    private pmc_cache_by_address = new LazyMap<string, Array<[string, $SIMPLE_PATH_TO_REGEXP_MATCH]>>();
+    private pmc_checks_by_address = new LazyMap<string, Array<$MessageListenerPMCObject>>();
+    private pmc_cache_by_address = new LazyMap<string, Array<[string, $PathToRegExpResult]>>();
 
-    HandleData<S>(src: S, address: string, ...data: any[]) {
+    HandleData(src: any, address: string, ...data: unknown[]) {
         !this.known_addresses.includes(address) && this.known_addresses.push(address);
 
         let pmc_cache = this.pmc_cache_by_address.get(address) ?? this.pmc_cache_by_address.setAndReturnValue(address, new Array());
 
         for (let caught of pmc_cache) {
             let [caught_hash, caught_match] = caught;
-            this.pmc_by_hash.get(caught_hash)?.callback(src, PathToRegExpMatchToMap(caught_match), ...data);
+            caught_match && this.pmc_by_hash.get(caught_hash)?.callback(src, PathToRegExpMatchToMap(caught_match), ...data);
         }
 
         let pmc_checks = this.pmc_checks_by_address.get(address) ?? this.pmc_checks_by_address.setAndReturnValue(address, this.pmc_by_hash.values().toArray());
@@ -37,7 +38,7 @@ export class MessageListeners {
         }
     }
 
-    AddMessageListener(pattern: string, callback: $MESSAGE_LISTENERS_CB<any>) {
+    AddMessageListener(pattern: string, callback: $MessageListenerCallback<any>) {
         let matcher = this.matcher_by_pattern.get(pattern) ?? this.matcher_by_pattern.setAndReturnValue(pattern, createMatcher(pattern));
 
         let ref_pmc = { pattern, matcher, callback };
@@ -57,7 +58,7 @@ export class MessageListeners {
         }
     }
 
-    RemoveMessageListener(pattern: string, callback: $MESSAGE_LISTENERS_CB<any>) {
+    RemoveMessageListener(pattern: string, callback: $MessageListenerCallback<any>) {
         let matcher = this.matcher_by_pattern.get(pattern);
         if (!matcher) return;
 
@@ -88,14 +89,16 @@ export class MessageListeners {
     }
 
     GetMessageListenersByAddress(target_address: string) {
-        return (this.pmc_cache_by_address.get(target_address)?.map(([pmc_hash]) => { let pmc = this.pmc_by_hash.get(pmc_hash); if (pmc) return { pattern: pmc.pattern, callback: pmc.callback }; }) ?? []) as Array<{ pattern: string, callback: $MESSAGE_LISTENERS_CB<any> }>;
+        return (this.pmc_cache_by_address.get(target_address)?.map(([pmc_hash]) => {
+            let pmc = this.pmc_by_hash.get(pmc_hash); if (pmc) return { pattern: pmc.pattern, callback: pmc.callback };
+        }) ?? []) as Array<{ pattern: string, callback: $MessageListenerCallback<any> }>;
     }
 
     GetMessageListenersByPattern(target_pattern: string) {
         return this.pmc_by_hash.values().toArray().filter(pmc => pmc.pattern === target_pattern).map(pmc => ({ pattern: pmc.pattern, callback: pmc.callback }));
     }
 
-    GetMessageListenersByCallback(target_callback: $MESSAGE_LISTENERS_CB<any>) {
+    GetMessageListenersByCallback(target_callback: $MessageListenerCallback<any>) {
         return this.pmc_by_hash.values().toArray().filter(pmc => pmc.callback === target_callback).map(pmc => ({ pattern: pmc.pattern, callback: pmc.callback }));
     }
 }

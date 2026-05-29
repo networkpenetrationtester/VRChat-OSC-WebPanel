@@ -1,8 +1,12 @@
 {
 	"name": "frontend",
-	"private": true,
-	"version": "0.0.1",
+	"version": "1.0",
+	"description": "VRChat OSC WebPanel frontend",
+	"author": "networkpenetrationtester",
+	"main": "index.ts",
+	"packageManager": "yarn@4.12.0",
 	"type": "module",
+	"license": "MIT",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
