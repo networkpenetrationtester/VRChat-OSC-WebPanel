@@ -5,17 +5,21 @@ import os from 'node:os';
 import path from 'node:path';
 import { env } from 'node:process';
 
+// **************************** ENVIRONMENT **************************** //
 export const PROJECT_ROOT = path.dirname(import.meta.dirname);
 config({ path: path.join(PROJECT_ROOT, '.env'), quiet: false });
-
 export const SERVER_ADDRESS = env.server_address ?? 'localhost';
 export const SERVER_PORT = Number(env.server_port ?? '9001');
 export const CLIENT_ADDRESS = env.client_address ?? 'localhost';
 export const CLIENT_PORT = Number(env.client_port ?? '9000');
 export const LOGGING = env.logging === 'true';
+// **************************** ENVIRONMENT **************************** //
 
+// **************************** DIRECTORIES **************************** //
 export const HOME_DIR = os.homedir();
-export const VRC_DIR = path.join(HOME_DIR, 'AppData', 'LocalLow', 'VRChat', 'VRChat'); // TODO: determine OS platform and corresponding DIRs automatically
+export const VRC_DIR = path.join(HOME_DIR, 'AppData', 'LocalLow', 'VRChat', 'VRChat');
+// TODO: determine OS platform and corresponding DIRs automatically
+// **************************** DIRECTORIES **************************** //
 
 // **************************** ARCHIVED WIZARDRY **************************** //
 //      // NOTE: THIS METHOD >> DOES NOT WORK << WHEN THE USER IS SIGNED INTO A STEAM ACCOUNT... BUT WOULD YOU EVEN BE ABLE TO GET AN AUTHTOKEN WITH THAT ANYWAY?
@@ -30,7 +34,6 @@ export const VRC_DIR = path.join(HOME_DIR, 'AppData', 'LocalLow', 'VRChat', 'VRC
 // **************************** ARCHIVED WIZARDRY **************************** //
 
 // **************************** USED ONLY TO FIND CURRENT USER ID SIGNED INTO THE GAME **************************** //
-
 export const VRC_USER_ID = env.vrchat_user_id;
 if (!VRC_USER_ID) throw new Error(chalk.bgRed(`[constants.ts] Value 'vrchat_user_id' not specified in .env`));
 
@@ -39,11 +42,9 @@ if (!fs.existsSync(VRC_AVI_STRUCTURE_DIR)) throw new Error(chalk.bgRed(`[constan
 
 export const VRC_AVI_DATA_DIR = path.join(VRC_DIR, 'LocalAvatarData', VRC_USER_ID); // LocalAvatarData for actual values
 if (!fs.existsSync(VRC_AVI_DATA_DIR)) throw new Error(chalk.bgRed(`[constants.ts] Directory ${VRC_AVI_DATA_DIR} does not exist.`));
-
 // **************************** USED ONLY TO FIND CURRENT USER ID SIGNED INTO THE GAME **************************** //
 
 // **************************** USED ONLY TO PERFORM STATELESS API REQUESTS **************************** //
-
 export const VRC_API_COOKIE_AUTH = env.vrchat_cookie_auth;
 if (!VRC_API_COOKIE_AUTH) console.log(chalk.bgYellow(`[constants.ts] Value 'vrchat_cookie_auth' not specified in .env (Disabling API features)`));
 
@@ -53,5 +54,4 @@ if (!VRC_API_COOKIE_2FA) console.log(chalk.bgYellow(`[constants.ts] Value 'vrcha
 export const USE_API_FEATURES = VRC_API_COOKIE_AUTH != null && env.use_api_features === 'true';
 
 export const VRC_API_COOKIE = { auth: VRC_API_COOKIE_AUTH, twoFactorAuth: VRC_API_COOKIE_2FA };
-
 // **************************** USED ONLY TO PERFORM STATELESS API REQUESTS **************************** //

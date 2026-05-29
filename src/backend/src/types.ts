@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // **************************** PATHTOREGEXP **************************** //
-
 export interface $PathToRegExpMatch {
     path: string
     params: Record<string | symbol, string | string[]>
@@ -12,11 +11,9 @@ export type $PathToRegExpResult = $PathToRegExpMatch | false;
 export interface $PathToRegExpMatcher {
     (address: string): $PathToRegExpResult
 }
-
 // **************************** PATHTOREGEXP **************************** //
 
 // **************************** MESSAGELISTENER **************************** //
-
 export interface $MessageListenerCallback<C> {
     (src: C, map: Map<string, string | string[]>, ...data: unknown[]): unknown
 }
@@ -26,22 +23,18 @@ export interface $MessageListenerPMCObject {
     matcher: $PathToRegExpMatcher
     callback: $MessageListenerCallback<any>
 }
-
 // **************************** MESSAGELISTENER **************************** //
 
 // **************************** OSC INTERFACE  **************************** //
-
 export interface $VRChatOSCInterfaceArguments {
     SERVER_ADDRESS: string
     SERVER_PORT: number
     CLIENT_ADDRESS: string
     CLIENT_PORT: number
 }
-
 // **************************** OSC INTERFACE  **************************** //
 
 // **************************** AVATAR STRUCTURE **************************** //
-
 export type $VRChatAvatarStructureIODatatype = 'Int' | 'Bool' | 'Float';
 
 export interface $VRChatAvatarStructureIO {
@@ -62,11 +55,9 @@ export interface $VRChatAvatarStructure {
     hash: number
     parameters: $VRChatAvatarStructureParameter[]
 }
-
 // **************************** AVATAR STRUCTURE **************************** //
 
 // **************************** AVATAR DATA **************************** //
-
 export interface $VRChatAvatarDataParameter {
     name: string
     value: number
@@ -77,11 +68,9 @@ export interface $VRChatAvatarData {
     legacyFingers: boolean
     animationParameters: $VRChatAvatarDataParameter[]
 }
-
 // **************************** AVATAR DATA **************************** //
 
 // **************************** VRCHAT AVATAR API **************************** //
-
 export interface $VRChatAPICookie2FAData {
     userId: string
     macAddress: string
@@ -146,5 +135,4 @@ export interface $VRChatAPIAvatarData {
     'updated_at': string // timestamp
     'version': number
 }
-
 // **************************** VRCHAT AVATAR API **************************** //
