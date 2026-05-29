@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { $PathToRegExpResult, $PathToRegExpMatcher, $MessageListenerCallback, $MessageListenerPMCObject } from './types';
-import { PathToRegExpMatchToMap } from './modules';
-import { LazyMap } from './lazymap';
-import { match as createMatcher } from 'path-to-regexp';
 import { MD5 } from 'object-hash';
+import { match as createMatcher } from 'path-to-regexp';
+import { LazyMap } from './lazymap.ts';
+import { PathToRegExpMatchToMap } from './modules.ts';
+import type { $PathToRegExpResult, $PathToRegExpMatcher, $MessageListenerCallback, $MessageListenerPMCObject } from './types.ts';
 
 export class MessageListeners {
     private pmc_by_hash = new LazyMap<string, $MessageListenerPMCObject>();
@@ -85,7 +85,7 @@ export class MessageListeners {
     }
 
     GetMessageListeners() {
-        return this.pmc_by_hash.values().toArray().map(pmc => ({ pattern: pmc.pattern, callback: pmc.callback }));
+        return this.pmc_by_hash.values().toArray().map((pmc: $MessageListenerPMCObject) => ({ pattern: pmc.pattern, callback: pmc.callback }));
     }
 
     GetMessageListenersByAddress(target_address: string) {

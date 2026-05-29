@@ -4,8 +4,17 @@
   "main": "index.ts",
   "license": "MIT",
   "scripts": {
-    "backend": "cd src/backend && yarn dev",
-    "frontend": "cd src/frontend && yarn dev"
+    "devback": "cd src/backend && tsx watch src/index.ts",
+    "devfront": "cd src/frontend && yarn dev",
+    "devall": "yarn devback && yarn devfront",
+
+    "buildback": "cd src/backend/src && tsc",
+    "buildfront": "cd src/frontend && vite build",
+    "buildall": "yarn buildfront && yarn buildback",
+
+    "runback": "cd src/backend/dist && node index.js",
+    "runfront": "echo not implemented",
+    "runall": "echo not implemented"
   },
   "workspaces": [
     "src/*"

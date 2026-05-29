@@ -15,7 +15,7 @@ export interface $PathToRegExpMatcher {
 
 // **************************** MESSAGELISTENER **************************** //
 export interface $MessageListenerCallback<C> {
-    (src: C, map: Map<string, string | string[]>, ...data: unknown[]): unknown
+    (src: C, map: Map<string, string | string[]>, ...data: any[]): void
 }
 
 export interface $MessageListenerPMCObject {
@@ -32,6 +32,17 @@ export interface $VRChatOSCInterfaceArguments {
     CLIENT_ADDRESS: string
     CLIENT_PORT: number
 }
+
+export interface $VRChatOSCInterfaceAvatarTypeMap {
+    inputs: Map<string, $VRChatAvatarStructureIODatatype>
+    outputs: Map<string, $VRChatAvatarStructureIODatatype>
+}
+
+export interface $VRChatOSCInterfaceCurrentAvatar {
+    data?: $VRChatAvatarData,
+    structure?: $VRChatAvatarStructure,
+    typemap?: $VRChatOSCInterfaceAvatarTypeMap
+}
 // **************************** OSC INTERFACE  **************************** //
 
 // **************************** AVATAR STRUCTURE **************************** //
@@ -39,14 +50,14 @@ export type $VRChatAvatarStructureIODatatype = 'Int' | 'Bool' | 'Float';
 
 export interface $VRChatAvatarStructureIO {
     address: string
-    type: $VRChatAvatarStructureIODatatype,
-    writable?: boolean
+    type: $VRChatAvatarStructureIODatatype
 }
 
 export interface $VRChatAvatarStructureParameter {
     name: string
     input?: $VRChatAvatarStructureIO
     output?: $VRChatAvatarStructureIO
+    writable: boolean
 }
 
 export interface $VRChatAvatarStructure {
@@ -105,7 +116,7 @@ export interface $VRChatAPIAvatarUnityPackageImpostor extends $VRChatAPIAvatarUn
 }
 
 export interface $VRChatAPIAvatarData {
-    'attribution': unknown // idk
+    'attribution': any // idk
     'authorId': string
     'authorName': string
     'created_at': string // timestamp
@@ -124,10 +135,10 @@ export interface $VRChatAPIAvatarData {
     'releaseStatus': string // 'public' | 'private' ?
     'searchable': boolean
     'styles': {
-        'primary': unknown // idk
-        'secondary': unknown // idk
+        'primary': any // idk
+        'secondary': any // idk
     }
-    'tags': unknown[] // idk
+    'tags': any[] // idk
     'thumbnailImageUrl': string
     'unityPackageUrl': string
     'unityPackageUrlObject': {} // idk

@@ -1,12 +1,15 @@
 {
     "compilerOptions": {
-        "module": "esnext",
+        "module": "preserve",
         "moduleResolution": "bundler",
         "declaration": true,
         "outDir": "dist",
         "rootDir": "src",
         "strict": true,
         "skipLibCheck": true,
-        "esModuleInterop": true
-    }
+        "rewriteRelativeImportExtensions": true,
+        "types": [
+            "node"
+        ]
+    },
 }

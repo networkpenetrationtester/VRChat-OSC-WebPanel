@@ -1,29 +1,38 @@
-import * as OSC from 'node-osc';
-import { CreateIOTypeMaps, LoadLastAvatar, TryParse } from './modules';
-import type { $MessageListenerCallback, $VRChatOSCInterfaceArguments } from './types';
-import { MessageListeners } from './message_listeners';
-import { MD5 } from 'object-hash';
-import { LazyMap } from './lazymap';
-import { LOGGING } from './constants';
 import chalk from 'chalk';
+import * as OSC from 'node-osc';
+import { MD5 } from 'object-hash';
+import { LazyMap } from './lazymap.ts';
+import { LOGGING, VRC_AVI_DATA_DIR, VRC_AVI_STRUCTURE_DIR } from './constants.ts';
+import { MessageListeners } from './message_listeners.ts';
+import { AvatarDataLoader, AvatarStructureLoader, GenerateAvatarTypeMap, LoadLastAvatar, SaveLastAvatar, TryParse } from './modules.ts';
+import type { $MessageListenerCallback, $VRChatOSCInterfaceArguments, $VRChatOSCInterfaceCurrentAvatar } from './types.ts';
 
 export type $VRChatOSCInterfaceMessageCallback = $MessageListenerCallback<VRChatOSCInterface>;
 
 export class VRChatOSCInterface extends MessageListeners { // TODO: genericize this
     private init = false;
-    private last = LoadLastAvatar();
+    private last;
     private server!: OSC.Server; // INTF <- VRC
     private client!: OSC.Client; // INTF -> VRC
     private readonly unacknowledged_messages = new LazyMap<string, (value: boolean) => void>();
 
-    current_avatar = {
-        ...this.last,
-        TYPEMAPS: CreateIOTypeMaps(this.last?.structure)
-    }
+    avatar: $VRChatOSCInterfaceCurrentAvatar;
 
     constructor() {
         super();
-        if (this.current_avatar.structure) this.current_avatar.TYPEMAPS = CreateIOTypeMaps(this.current_avatar.structure);
+        this.last = LoadLastAvatar();
+        this.avatar = this.last ? {
+            ...this.last, typemap: GenerateAvatarTypeMap(this.last.structure)
+        } : {
+            data: undefined, structure: undefined, typemap: GenerateAvatarTypeMap()
+        };
+        this.AddMessageListener('/avatar/change', (src, match, args) => {
+            const avi_id: string = args[0];
+            this.avatar.structure = AvatarStructureLoader(VRC_AVI_STRUCTURE_DIR, avi_id);
+            this.avatar.data = AvatarDataLoader(VRC_AVI_DATA_DIR, avi_id);
+            this.avatar.typemap = GenerateAvatarTypeMap(this.avatar.structure);
+            SaveLastAvatar(this.avatar); // TODO: saved osc settings?
+        });
     }
 
     Create(CONFIG: $VRChatOSCInterfaceArguments) {
@@ -57,6 +66,10 @@ export class VRChatOSCInterface extends MessageListeners { // TODO: genericize t
 
     GetUnacknowledged() {
         return this.unacknowledged_messages;
+    }
+
+    GetAvatar() {
+        return this.avatar;
     }
 
     private SetAcknowledged(hash: string) {

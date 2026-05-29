@@ -1,13 +1,32 @@
-import { config } from 'dotenv';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import { env } from 'process';
 import chalk from 'chalk';
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import { env } from 'node:process';
+import { config } from 'dotenv';
+
 
 // **************************** ENVIRONMENT **************************** //
-export const PROJECT_ROOT = path.dirname(import.meta.dirname);
+export function GetProjectRoot(start_cwd: string) {
+    if (fs.existsSync(path.join(start_cwd, 'package.json'))) return start_cwd;
+    for (let prev_cwd = start_cwd, curr_cwd = path.dirname(start_cwd); curr_cwd != prev_cwd; prev_cwd = curr_cwd, curr_cwd = path.dirname(curr_cwd)) {
+        if (fs.existsSync(path.join(curr_cwd, 'package.json'))) return curr_cwd;
+    }
+    return undefined;
+}
+
+let cwd = import.meta.dirname;
+let root = GetProjectRoot(import.meta.dirname);
+if (typeof root !== 'string') {
+    console.log(chalk.bgRed(`Could not recursively find project root from ${cwd}`));
+} else {
+    console.log(chalk.bgGreen(`Found project root ${root}`));
+}
+
+export const PROJECT_ROOT = root ?? path.dirname(import.meta.dirname);
+
 config({ path: path.join(PROJECT_ROOT, '.env'), quiet: false });
+
 export const SERVER_ADDRESS = env.server_address ?? 'localhost';
 export const SERVER_PORT = Number(env.server_port ?? '9001');
 export const CLIENT_ADDRESS = env.client_address ?? 'localhost';

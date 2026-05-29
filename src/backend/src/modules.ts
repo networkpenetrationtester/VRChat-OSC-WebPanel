@@ -2,10 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import chalk from 'chalk';
 import rl from 'node:readline';
-import { LazyMap } from './lazymap';
-import { PROJECT_ROOT } from './constants';
+import { LazyMap } from './lazymap.ts';
+import { PROJECT_ROOT } from './constants.ts';
 import type { ReadLineOptions } from 'node:readline';
-import type { $VRChatAvatarStructure, $VRChatAPIAvatarData, $VRChatAvatarStructureIODatatype, $VRChatAvatarData, $PathToRegExpResult } from './types';
+import type { $VRChatAvatarStructure, $VRChatAPIAvatarData, $VRChatAvatarStructureIODatatype, $VRChatAvatarData, $PathToRegExpResult, $VRChatOSCInterfaceAvatarTypeMap, $VRChatOSCInterfaceCurrentAvatar } from './types.ts';
 
 export function TryParse(...values: unknown[]) {
     try {
@@ -53,8 +53,8 @@ export function STDIO(options?: ReadLineOptions) {
     });
 }
 
-export function RemoveUTF8BOM(string: string) {
-    return string.replaceAll('\ufeff', '');
+export function RemoveUTF8BOM(data: string) {
+    return new String(data).replace(/\ufeff/g, '');
 }
 
 export function PathToRegExpMatchToMap(match: $PathToRegExpResult) {
@@ -101,7 +101,7 @@ export function AvatarDataLoader(VRC_AVI_DATA_DIR: string, avi_id: string): $VRC
     }
 }
 
-export function LoadLastAvatar(): { data: $VRChatAvatarData, structure: $VRChatAvatarStructure } | undefined {
+export function LoadLastAvatar(): { structure: $VRChatAvatarStructure, data: $VRChatAvatarData } | undefined {
     const last_avi_path = path.join(PROJECT_ROOT, 'last.json');
 
     if (!fs.existsSync(last_avi_path)) {
@@ -117,11 +117,12 @@ export function LoadLastAvatar(): { data: $VRChatAvatarData, structure: $VRChatA
     }
 }
 
-export function SaveLastAvatar(data: $VRChatAvatarData, structure: $VRChatAvatarStructure) {
-    fs.writeFileSync(path.join(PROJECT_ROOT, 'last.json'), JSON.stringify({ data, structure }));
+export function SaveLastAvatar(avatar: $VRChatOSCInterfaceCurrentAvatar) {
+    const { structure, data } = avatar;
+    fs.writeFileSync(path.join(PROJECT_ROOT, 'last.json'), JSON.stringify({ structure, data }));
 }
 
-export function CreateIOTypeMaps(vrc_avi_structure?: $VRChatAvatarStructure) {
+export function GenerateAvatarTypeMap(vrc_avi_structure?: $VRChatAvatarStructure): $VRChatOSCInterfaceAvatarTypeMap {
     const inputs = new LazyMap<string, $VRChatAvatarStructureIODatatype>();
     const outputs = new LazyMap<string, $VRChatAvatarStructureIODatatype>();
 
@@ -129,6 +130,7 @@ export function CreateIOTypeMaps(vrc_avi_structure?: $VRChatAvatarStructure) {
         for (const parameter of vrc_avi_structure.parameters) {
             parameter.input && inputs.set(parameter.input.address, parameter.input.type);
             parameter.output && outputs.set(parameter.output.address, parameter.output.type);
+            parameter.writable = !!parameter.input;
         }
     }
 
