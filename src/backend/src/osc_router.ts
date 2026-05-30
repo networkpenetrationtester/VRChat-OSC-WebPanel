@@ -5,7 +5,7 @@ import chalk from 'chalk';
 import type { $VRChatOSCRouterExternalApplication, $VRChatOSCInterfaceConfiguration } from './types.ts';
 import * as OSC from 'node-osc';
 import { VRChatOSCInterface } from './osc_interface.ts';
-import { LOGGING, VERBOSE } from './constants.ts';
+import { LOGGING } from './constants.ts';
 import type { $VRChatOSCInterfaceMessageCallback } from './osc_interface.ts';
 
 export class VRChatOSCRouter extends VRChatOSCInterface {
@@ -26,10 +26,16 @@ export class VRChatOSCRouter extends VRChatOSCInterface {
 				const packet = OSC.encode(msg);
 				this.client.send(packet, app.port, app.address, err => {
 					if (err) {
-						console.log(chalk.bgBlack.red(`⬆ [OSC_RTR => ${app.address}:${app.port}${app.name ? [' (', ')'].join(app.name) : ''}] Failed to forward values. ${err}`));
+						console.log(
+							chalk.bgBlack.red(
+								`⬆ [OSC_RTR => ${app.address}:${app.port}${app.name ? [' (', ')'].join(app.name) : ''}] Failed to forward values. ${err}`
+							)
+						);
 					} else if (LOGGING) {
 						console.log(
-							chalk.bgBlack.blue(`⬆ [OSC_RTR => ${app.address}:${app.port}${app.name ? [' (', ')'].join(app.name) : ''}]`),
+							chalk.bgBlack.blue(
+								`⬆ [OSC_RTR => ${app.address}:${app.port}${app.name ? [' (', ')'].join(app.name) : ''}]`
+							),
 							chalk.yellow(address),
 							values
 						);
