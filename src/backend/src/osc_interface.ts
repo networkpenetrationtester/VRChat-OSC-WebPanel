@@ -31,10 +31,13 @@ export class VRChatOSCInterface extends MessageListener {
 
 	readonly avatar: $VRChatOSCInterfaceCurrentAvatar;
 
-	constructor(config: $VRChatOSCInterfaceConfiguration) {
+	constructor(config?: $VRChatOSCInterfaceConfiguration) {
 		super();
-		this.config = config;
+
+		config && (this.config = config);
+
 		const last_avatar = LoadLastAvatar();
+
 		this.avatar = last_avatar
 			? { ...last_avatar, typemap: GenerateAvatarTypeMap(last_avatar.structure) }
 			: { data: undefined, structure: undefined, typemap: GenerateAvatarTypeMap() };
@@ -49,9 +52,23 @@ export class VRChatOSCInterface extends MessageListener {
 	}
 
 	Create(config?: $VRChatOSCInterfaceConfiguration) {
+		if (config) this.config = config;
+
+		if (!this.config) {
+			console.log(chalk.bgYellow(`[OSC_INTF] Interface configuration empty.`));
+			return;
+		}
+
 		if (this.init) this.Destroy();
 
-		if (config) this.config = config;
+		this.client = dgram.createSocket('udp4').bind(this.config.VRC_RX_PORT, this.config.INTERFACE_ADDRESS, () => {
+			console.log(chalk.bgBlue(`[OSC_INTF] Client sending to ${INTERFACE_ADDRESS}:${this.config.VRC_RX_PORT}...`));
+		});
+
+		this.client.on('close', () => {
+			this.init = false;
+			console.log(chalk.bgYellow('[OSC_INTF] Client closed.'));
+		});
 
 		this.server = new OSC.Server(this.config.VRC_TX_PORT, this.config.INTERFACE_ADDRESS, () => {
 			console.log(chalk.bgBlue(`[OSC_INTF] Server listening on ${INTERFACE_ADDRESS}:${this.config.VRC_TX_PORT}...`));
@@ -69,20 +86,6 @@ export class VRChatOSCInterface extends MessageListener {
 		this.server.on('close', () => {
 			this.init = false;
 			console.log(chalk.bgYellow('[OSC_INTF] Server closed.'));
-		});
-
-		this.client = dgram.createSocket('udp4', () => {
-			this.client.bind(this.config.VRC_TX_PORT, INTERFACE_ADDRESS);
-			chalk.bgBlue(`[OSC_INTF] Client sending on ${INTERFACE_ADDRESS}:${this.config.VRC_TX_PORT}...`)
-		});
-
-		this.client.on('message', (msg) => {
-			console.log('CLIENT SAW', msg);
-		});
-
-		this.client.on('close', () => {
-			this.init = false;
-			console.log(chalk.bgYellow('[OSC_INTF] Client closed.'));
 		});
 
 		return this;

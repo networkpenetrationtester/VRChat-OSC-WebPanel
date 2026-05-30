@@ -2,14 +2,16 @@ import { STDIO } from './modules.ts';
 import { VRChatOSCInterface } from './osc_interface.ts';
 import { VRC_ADDRESS, VRC_RX_PORT, VRC_TX_PORT, INTERFACE_ADDRESS } from './constants.ts';
 
-const Interface = new VRChatOSCInterface();
-
-Interface.Create({
+const config = {
   VRC_ADDRESS,
   VRC_RX_PORT,
   VRC_TX_PORT,
   INTERFACE_ADDRESS
-});
+}
+
+const Interface = new VRChatOSCInterface();
+
+Interface.Create(config);
 
 const stdio = STDIO();
 

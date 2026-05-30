@@ -1,10 +1,10 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from 'fs';
+import path from 'path';
 import chalk from 'chalk';
-import rl from 'node:readline';
+import rl from 'readline';
 import { LazyMap } from './lazymap.ts';
 import { PROJECT_ROOT } from './constants.ts';
-import type { ReadLineOptions } from 'node:readline';
+import type { ReadLineOptions } from 'readline';
 import type {
   $VRChatAvatarStructure,
   $VRChatAPIAvatarData,
