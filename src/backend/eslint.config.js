@@ -9,17 +9,13 @@ export default [
       parser: tsparser,
       ecmaVersion: 'latest',
       sourceType: 'module',
-      globals: {
-        ...globals.node,
-      },
+      globals: { ...globals.node }
     },
-    plugins: {
-      '@typescript-eslint': tseslint,
-    },
+    plugins: { '@typescript-eslint': tseslint },
     rules: {
       'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': ['error'],
-      '@typescript-eslint/no-explicit-any': 'warn',
-    },
-  },
+      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-explicit-any': 'warn'
+    }
+  }
 ];

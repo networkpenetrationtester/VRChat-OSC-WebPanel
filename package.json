@@ -3,16 +3,13 @@
   "version": "1.0.0",
   "main": "index.ts",
   "license": "MIT",
-  "private": "true",
   "scripts": {
     "devback": "cd src/backend && tsx src/index.ts",
     "devfront": "cd src/frontend && yarn dev",
     "devall": "yarn devback && yarn devfront",
-
     "buildback": "cd src/backend/src && tsc",
     "buildfront": "cd src/frontend && vite build",
     "buildall": "yarn buildfront && yarn buildback",
-
     "runback": "cd src/backend/dist && node index.js",
     "runfront": "echo not implemented",
     "runall": "echo not implemented"
@@ -23,5 +20,6 @@
   "dependencies": {
     "@types/node": "^25.9.1",
     "concurrently": "^9.2.1"
-  }
+  },
+  "packageManager": "yarn@4.15.0"
 }
