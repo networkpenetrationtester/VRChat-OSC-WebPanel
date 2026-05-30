@@ -7,28 +7,29 @@ import { config } from 'dotenv';
 
 // **************************** ENVIRONMENT **************************** //
 export function GetProjectRoot(start_cwd: string) {
-  if (fs.existsSync(path.join(start_cwd, 'package.json'))) return start_cwd;
-  for (
-    let prev_cwd = start_cwd, curr_cwd = path.dirname(start_cwd);
-    curr_cwd != prev_cwd;
-    prev_cwd = curr_cwd, curr_cwd = path.dirname(curr_cwd)
-  ) {
-    if (fs.existsSync(path.join(curr_cwd, 'package.json'))) return curr_cwd;
-  }
-  return undefined;
+	if (fs.existsSync(path.join(start_cwd, 'package.json'))) return start_cwd;
+	for (
+		let prev_cwd = start_cwd, curr_cwd = path.dirname(start_cwd);
+		curr_cwd != prev_cwd;
+		prev_cwd = curr_cwd, curr_cwd = path.dirname(curr_cwd)
+	) {
+		if (fs.existsSync(path.join(curr_cwd, 'package.json'))) return curr_cwd;
+	}
+	return undefined;
 }
 
 const cwd = import.meta.dirname; // process.cwd(); for an .env inside the root of another project
 const root = GetProjectRoot(cwd);
 
-console.log(typeof root === 'string'
-  ? chalk.bgGreen(`[constants.ts] Found project root '${root}'.`)
-  : chalk.bgYellow(`[constants.ts] Failed to recursively find project root of '${cwd}'.`)
+console.log(
+	typeof root === 'string'
+		? chalk.bgGreen(`[constants.ts] Found project root '${root}'.`)
+		: chalk.bgYellow(`[constants.ts] Failed to recursively find project root of '${cwd}'.`)
 );
 
 export const PROJECT_ROOT = root ?? path.dirname(import.meta.dirname);
 
-config({ path: path.join(PROJECT_ROOT, '.env'), quiet: false, });
+config({ path: path.join(PROJECT_ROOT, '.env'), quiet: false });
 
 export const VRC_ADDRESS = env.vrchat_address ?? 'localhost';
 export const VRC_RX_PORT = Number(env.vrchat_recieve_port ?? '9000'); // VRC <- INTF
@@ -61,27 +62,27 @@ if (!VRC_USER_ID) throw new Error(chalk.bgRed(`[constants.ts] Value 'vrchat_user
 
 export const VRC_AVI_STRUCTURE_DIR = path.join(VRC_DIR, 'OSC', VRC_USER_ID, 'Avatars'); // OSC for typemaps
 if (!fs.existsSync(VRC_AVI_STRUCTURE_DIR))
-  throw new Error(chalk.bgRed(`[constants.ts] Directory ${VRC_AVI_STRUCTURE_DIR} does not exist.`));
+	throw new Error(chalk.bgRed(`[constants.ts] Directory ${VRC_AVI_STRUCTURE_DIR} does not exist.`));
 
 export const VRC_AVI_DATA_DIR = path.join(VRC_DIR, 'LocalAvatarData', VRC_USER_ID); // LocalAvatarData for actual values
 if (!fs.existsSync(VRC_AVI_DATA_DIR))
-  throw new Error(chalk.bgRed(`[constants.ts] Directory ${VRC_AVI_DATA_DIR} does not exist.`));
+	throw new Error(chalk.bgRed(`[constants.ts] Directory ${VRC_AVI_DATA_DIR} does not exist.`));
 // **************************** USED ONLY TO FIND CURRENT USER ID SIGNED INTO THE GAME **************************** //
 
 // **************************** USED ONLY TO PERFORM STATELESS API REQUESTS **************************** //
 export const VRC_API_COOKIE_AUTH = env.vrchat_cookie_auth;
 if (!VRC_API_COOKIE_AUTH)
-  console.log(
-    chalk.bgYellow(`[constants.ts] Value 'vrchat_cookie_auth' not specified in .env (Disabling API features)`)
-  );
+	console.log(
+		chalk.bgYellow(`[constants.ts] Value 'vrchat_cookie_auth' not specified in .env (Disabling API features)`)
+	);
 
 export const VRC_API_COOKIE_2FA = env.vrchat_cookie_twoFactorAuth;
 if (!VRC_API_COOKIE_2FA)
-  console.log(
-    chalk.bgYellow(
-      `[constants.ts] Value 'vrchat_cookie_twoFactorAuth' not specified in .env (May cause API authentication failure)`
-    )
-  );
+	console.log(
+		chalk.bgYellow(
+			`[constants.ts] Value 'vrchat_cookie_twoFactorAuth' not specified in .env (May cause API authentication failure)`
+		)
+	);
 
 export const USE_API_FEATURES = VRC_API_COOKIE_AUTH != null && env.use_api_features === 'true';
 
