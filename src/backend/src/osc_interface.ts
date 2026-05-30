@@ -79,7 +79,7 @@ export class VRChatOSCInterface extends MessageListener {
 			const [address, ...values] = data;
 			VERBOSE && console.log(chalk.bgBlack.green('⬇ [VRChat => OSC_INTF]'), debug);
 			LOGGING && console.log(chalk.bgBlack.green('⬇ [VRChat => OSC_INTF]'), chalk.yellow(address), values);
-			this.HandleData(this, address, values);
+			this.HandleData(this, address, ...values);
 			this.unacknowledged.size > 0 && this.SetAcknowledged(MD5({ address, values }));
 		});
 

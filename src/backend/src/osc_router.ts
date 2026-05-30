@@ -1,41 +1,44 @@
 // inspired by VOR
 import { MD5 } from 'object-hash';
 import { LazyMap } from './lazymap.ts';
-import type { $MessageListenerCallback, $MessageListenerPMCObject, $VRChatOSCRouterExternalApplication, $VRChatOSCInterfaceConfiguration } from './types.ts';
+import chalk from 'chalk';
+import type { $VRChatOSCRouterExternalApplication, $VRChatOSCInterfaceConfiguration } from './types.ts';
 import * as OSC from 'node-osc';
-import { VRChatOSCInterface } from './osc_interface.ts';
-
-export interface $OSCRouterForwarder {
-  (address: string, ...data: any[]): any
-}
+import { $VRChatOSCInterfaceMessageCallback, VRChatOSCInterface } from './osc_interface.ts';
+import { LOGGING, VERBOSE } from './constants.ts';
 
 export class VRChatOSCRouter extends VRChatOSCInterface {
-  protected app_by_hash = new LazyMap<string, $VRChatOSCRouterExternalApplication>();
-  protected callback_by_app_hash = new LazyMap<string, $MessageListenerCallback<VRChatOSCRouter>>();
-  protected pmc_by_app_hash = new LazyMap<string, $MessageListenerPMCObject>();
+  protected forwarder_by_app_hash = new LazyMap<string, $VRChatOSCInterfaceMessageCallback>();
 
-  // TODO: internal router functions. They can be created and appended to a list to keep in memory for reference
-  // TODO: generator for said router functions. Just an ordinary pmc :D (Route function creates + this.AddListener's)
-
-  constructor(config: $VRChatOSCInterfaceConfiguration, ...external_applications: $VRChatOSCRouterExternalApplication[]) {
+  constructor(config?: $VRChatOSCInterfaceConfiguration) {
     super(config);
   }
 
   Route(pattern: string, app: $VRChatOSCRouterExternalApplication) {
     const app_hash = MD5(app);
-    this.app_by_hash.trySetAndReturnValue(app_hash, app);
-    const callback = this.callback_by_app_hash.trySetAndReturnValue(pattern, (src, map, address, ...values) => {
-      const msg = new OSC.Message(address, ...values);
-      const packet = OSC.encode(msg);
-      this.client.send(packet, app.port, app.address);
-    });
-    this.AddMessageListener(pattern, callback);
+    let forwarder = this.forwarder_by_app_hash.get(app_hash);
+
+    if (!forwarder) { // TODO: STANDARDIZE THIS LOGGING.
+      forwarder = this.forwarder_by_app_hash.setAndReturnValue(app_hash, (src, map, address, ...values) => {
+        const msg = new OSC.Message(address, ...values);
+        const packet = OSC.encode(msg);
+        this.client.send(packet, app.port, app.address, (err) => {
+          if (err) {
+            console.log(chalk.bgBlack.red(`⬆ [OSC_RTR => ${app.name ?? [app.address, app.port].join(':')}]`), chalk.yellow(address), values);
+          } else if (LOGGING) {
+            console.log(chalk.bgBlack.blue(`⬆ [OSC_RTR => ${app.address}:${app.port}${app.name ? [' (', ')'].join(app.name) : ''}`), chalk.yellow(address), values);
+          }
+        });
+      });
+    }
+
+    this.AddMessageListener(pattern, forwarder);
   }
 
   UnRoute(pattern: string, app: $VRChatOSCRouterExternalApplication) {
-    const app_hash = MD5(app);
-    const callback = this.callback_by_app_hash.get(app_hash);
-    if (!callback) return;
-    this.RemoveMessageListener(pattern, callback);
+    // const app_hash = MD5(app);
+    // const callback = this.callback_by_app_hash.get(app_hash);
+    // if (!callback) return;
+    // this.RemoveMessageListener(pattern, callback);
   }
 }

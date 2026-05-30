@@ -18,7 +18,7 @@ export class MessageListener {
   protected pmc_checks_by_address = new LazyMap<string, Array<$MessageListenerPMCObject>>();
   protected pmc_cache_by_address = new LazyMap<string, Array<[string, $PathToRegExpResult]>>();
 
-  HandleData(src: any, address: string, ...data: unknown[]) {
+  HandleData(src: any, address: string, ...values: any[]) {
     !this.known_addresses.includes(address) && this.known_addresses.push(address);
 
     const pmc_cache =
@@ -26,7 +26,7 @@ export class MessageListener {
 
     for (const caught of pmc_cache) {
       const [caught_hash, caught_match] = caught;
-      caught_match && this.pmc_by_hash.get(caught_hash)?.callback(src, PathToRegExpMatchToMap(caught_match), address, ...data);
+      caught_match && this.pmc_by_hash.get(caught_hash)?.callback(src, PathToRegExpMatchToMap(caught_match), address, ...values);
     }
 
     let pmc_checks =
@@ -38,7 +38,7 @@ export class MessageListener {
         const { matcher, callback } = pmc_check;
         const match = matcher(address);
         if (match) {
-          callback(src, PathToRegExpMatchToMap(match), address, ...data);
+          callback(src, PathToRegExpMatchToMap(match), address, ...values);
           pmc_cache.push([MD5(pmc_check), match]);
         }
         pmc_checks = pmc_checks.slice(1);

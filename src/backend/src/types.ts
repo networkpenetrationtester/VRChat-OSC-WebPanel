@@ -24,7 +24,7 @@ export interface $PathToRegExpMatcher {
 
 // **************************** MESSAGELISTENER **************************** //
 export interface $MessageListenerCallback<C> {
-  (src: C, map: Map<string, string | string[]>, address: string, ...data: any[]): void;
+  (src: C, map: Map<string, string | string[]>, address: string, ...values: any[]): void;
 }
 
 export interface $MessageListenerPMCObject {

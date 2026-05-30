@@ -1,23 +1,30 @@
+import { VRC_ADDRESS, VRC_RX_PORT, VRC_TX_PORT } from "./constants";
 import { STDIO } from './modules.ts';
-import { VRChatOSCInterface } from './osc_interface.ts';
-import { VRC_ADDRESS, VRC_RX_PORT, VRC_TX_PORT, INTERFACE_ADDRESS } from './constants.ts';
+import { VRChatOSCRouter } from './osc_router.ts';
+import type { $VRChatOSCRouterExternalApplication } from "./types.ts";
 
-const config = {
+const app: $VRChatOSCRouterExternalApplication = {
+  address: '192.168.1.147',
+  port: 9001,
+  name: 'test'
+};
+
+const Router = new VRChatOSCRouter();
+
+Router.Route('/*_', app);
+
+Router.Create({
   VRC_ADDRESS,
   VRC_RX_PORT,
   VRC_TX_PORT,
-  INTERFACE_ADDRESS
-}
-
-const Interface = new VRChatOSCInterface();
-
-Interface.Create(config);
+  INTERFACE_ADDRESS: '0.0.0.0'
+});
 
 const stdio = STDIO();
 
 stdio.on('line', async input => {
   const [address, ...values] = input.split(' ');
-  await Interface.SendValueAcknowledged(address, ...values);
+  await Router.SendValueAcknowledged(address, ...values);
 });
 
-export { Interface, stdio };
+export { Router };
