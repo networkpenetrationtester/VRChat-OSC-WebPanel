@@ -4,8 +4,9 @@ import { LazyMap } from './lazymap.ts';
 import chalk from 'chalk';
 import type { $VRChatOSCRouterExternalApplication, $VRChatOSCInterfaceConfiguration } from './types.ts';
 import * as OSC from 'node-osc';
-import { $VRChatOSCInterfaceMessageCallback, VRChatOSCInterface } from './osc_interface.ts';
+import { VRChatOSCInterface } from './osc_interface.ts';
 import { LOGGING, VERBOSE } from './constants.ts';
+import type { $VRChatOSCInterfaceMessageCallback } from './osc_interface.ts';
 
 export class VRChatOSCRouter extends VRChatOSCInterface {
 	protected forwarder_by_app_hash = new LazyMap<string, $VRChatOSCInterfaceMessageCallback>();
