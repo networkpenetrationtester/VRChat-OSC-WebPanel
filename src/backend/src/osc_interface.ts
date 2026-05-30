@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import chalk from 'chalk';
 import * as OSC from 'node-osc';
+import dgram from 'dgram';
 import { MD5 } from 'object-hash';
 import { LazyMap } from './lazymap.ts';
 import { INTERFACE_ADDRESS, LOGGING, VERBOSE, VRC_AVI_DATA_DIR, VRC_AVI_STRUCTURE_DIR } from './constants.ts';
@@ -13,24 +15,25 @@ import {
 } from './modules.ts';
 import type {
 	$MessageListenerCallback,
-	$OSCRouterExternalApplication,
-	$VRChatOSCInterfaceArguments,
+	$VRChatOSCInterfaceConfiguration,
 	$VRChatOSCInterfaceCurrentAvatar
 } from './types.ts';
-import { OSCRouter } from './router.ts';
+import { MessageListener } from './message_listener.ts';
 
 export type $VRChatOSCInterfaceMessageCallback = $MessageListenerCallback<VRChatOSCInterface>;
 
-export class VRChatOSCInterface extends OSCRouter { // TODO: genericize this
+export class VRChatOSCInterface extends MessageListener {
 	protected init = false;
-	protected server!: OSC.Server; // INTF <- VRC
 	protected unacknowledged = new LazyMap<string, (value: boolean) => void>();
+	protected server!: OSC.Server;
+	protected client!: dgram.Socket;
+	protected config!: $VRChatOSCInterfaceConfiguration;
 
 	readonly avatar: $VRChatOSCInterfaceCurrentAvatar;
 
-	constructor(...external_applications: $OSCRouterExternalApplication[]) {
-		super(/* ...external_applications */);
-
+	constructor(config: $VRChatOSCInterfaceConfiguration) {
+		super();
+		this.config = config;
 		const last_avatar = LoadLastAvatar();
 		this.avatar = last_avatar
 			? { ...last_avatar, typemap: GenerateAvatarTypeMap(last_avatar.structure) }
@@ -45,11 +48,13 @@ export class VRChatOSCInterface extends OSCRouter { // TODO: genericize this
 		});
 	}
 
-	Create(config: $VRChatOSCInterfaceArguments) {
+	Create(config?: $VRChatOSCInterfaceConfiguration) {
 		if (this.init) this.Destroy();
 
-		this.server = new OSC.Server(config.VRC_TX_PORT, config.INTERFACE_ADDRESS, () => {
-			console.log(chalk.bgBlue(`[OSC_INTF] Server listening on ${INTERFACE_ADDRESS}:${config.VRC_TX_PORT}...`));
+		if (config) this.config = config;
+
+		this.server = new OSC.Server(this.config.VRC_TX_PORT, this.config.INTERFACE_ADDRESS, () => {
+			console.log(chalk.bgBlue(`[OSC_INTF] Server listening on ${INTERFACE_ADDRESS}:${this.config.VRC_TX_PORT}...`));
 		});
 
 		this.server.on('message', (...args) => {
@@ -66,13 +71,29 @@ export class VRChatOSCInterface extends OSCRouter { // TODO: genericize this
 			console.log(chalk.bgYellow('[OSC_INTF] Server closed.'));
 		});
 
-		return this.server;
+		this.client = dgram.createSocket('udp4', () => {
+			this.client.bind(this.config.VRC_TX_PORT, INTERFACE_ADDRESS);
+			chalk.bgBlue(`[OSC_INTF] Client sending on ${INTERFACE_ADDRESS}:${this.config.VRC_TX_PORT}...`)
+		});
+
+		this.client.on('message', (msg) => {
+			console.log('CLIENT SAW', msg);
+		});
+
+		this.client.on('close', () => {
+			this.init = false;
+			console.log(chalk.bgYellow('[OSC_INTF] Client closed.'));
+		});
+
+		return this;
 	}
 
 	Destroy() {
-		if (!this.init) return console.log(chalk.bgRed('[OSC_INTF] Server not initialized.'));
+		if (!this.init) return console.log(chalk.bgRed('[OSC_INTF] Interface not initialized.'));
 		this.server.close();
+		this.client.close();
 		this.init = false;
+		return this;
 	}
 
 	GetUnacknowledged() {
@@ -99,7 +120,7 @@ export class VRChatOSCInterface extends OSCRouter { // TODO: genericize this
 		return this.unacknowledged;
 	}
 
-	async SendValueAcknowledged(address: string, ...values: unknown[]): Promise<boolean> {
+	async SendValueAcknowledged(address: string, ...values: any[]): Promise<boolean> {
 		const ack = await this.SendValue(address, ...values);
 		const bgBlack = chalk.bgBlack;
 		LOGGING &&
@@ -111,7 +132,7 @@ export class VRChatOSCInterface extends OSCRouter { // TODO: genericize this
 		return ack;
 	}
 
-	async SendValue(address: string, ...values: unknown[]): Promise<boolean> {
+	async SendValue(address: string, ...values: any[]): Promise<boolean> {
 		values = TryParse(...values);
 
 		if (values.length === 0) {
@@ -120,6 +141,11 @@ export class VRChatOSCInterface extends OSCRouter { // TODO: genericize this
 		}
 
 		this.unacknowledged.size >= 1024 && this.unacknowledged.shift();
+
+		const msg = new OSC.Message(address, ...values);
+		const packet = OSC.encode(msg);
+
+		this.client.send(packet, this.config.VRC_RX_PORT, this.config.VRC_ADDRESS);
 
 		LOGGING && console.log(chalk.bgBlack.green('⬆ [OSC_INTF => VRChat]'), chalk.yellow(address), values);
 

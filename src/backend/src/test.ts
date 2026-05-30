@@ -1,17 +1,20 @@
-import dgram from 'dgram';
-import * as OSC from 'node-osc';
+import { VRChatOSCRouter } from "./osc_router";
+import { VRC_ADDRESS, VRC_RX_PORT, VRC_TX_PORT, INTERFACE_ADDRESS } from "./constants";
+import { $VRChatOSCRouterExternalApplication } from "./types";
 
-let osc_server = new OSC.Server(9998, '192.168.1.101');
-osc_server.on('message', (...args) => console.log(args));
+const config = {
+    VRC_ADDRESS,
+    VRC_RX_PORT,
+    VRC_TX_PORT,
+    INTERFACE_ADDRESS
+}
 
+const app: $VRChatOSCRouterExternalApplication = {
+    address: '192.168.1.147',
+    port: 9999,
+    name: 'test'
+};
 
+const router = new VRChatOSCRouter(config, app);
 
-let y = dgram.createSocket('udp4', (msg) => {
-    console.log('y', msg);
-});
-
-y.bind(9999, '0.0.0.0');
-
-let msg = new OSC.Message('/avatar/benis', 3);
-
-y.send(OSC.encode(msg), 9998, '192.168.1.101');
+router.Create();

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // **************************** OSC ROUTER **************************** //
-export interface $OSCRouterExternalApplication {
+export interface $VRChatOSCRouterExternalApplication {
   address: string;
   port: number;
   name?: string;
@@ -24,7 +24,7 @@ export interface $PathToRegExpMatcher {
 
 // **************************** MESSAGELISTENER **************************** //
 export interface $MessageListenerCallback<C> {
-  (src: C, map: Map<string, string | string[]>, ...data: any[]): void;
+  (src: C, map: Map<string, string | string[]>, address: string, ...data: any[]): void;
 }
 
 export interface $MessageListenerPMCObject {
@@ -35,7 +35,7 @@ export interface $MessageListenerPMCObject {
 // **************************** MESSAGELISTENER **************************** //
 
 // **************************** OSC INTERFACE  **************************** //
-export interface $VRChatOSCInterfaceArguments {
+export interface $VRChatOSCInterfaceConfiguration {
   VRC_ADDRESS: string,
   VRC_RX_PORT: number,
   VRC_TX_PORT: number,

@@ -26,7 +26,7 @@ export class MessageListener {
 
     for (const caught of pmc_cache) {
       const [caught_hash, caught_match] = caught;
-      caught_match && this.pmc_by_hash.get(caught_hash)?.callback(src, PathToRegExpMatchToMap(caught_match), ...data);
+      caught_match && this.pmc_by_hash.get(caught_hash)?.callback(src, PathToRegExpMatchToMap(caught_match), address, ...data);
     }
 
     let pmc_checks =
@@ -38,7 +38,7 @@ export class MessageListener {
         const { matcher, callback } = pmc_check;
         const match = matcher(address);
         if (match) {
-          callback(src, PathToRegExpMatchToMap(match), ...data);
+          callback(src, PathToRegExpMatchToMap(match), address, ...data);
           pmc_cache.push([MD5(pmc_check), match]);
         }
         pmc_checks = pmc_checks.slice(1);
