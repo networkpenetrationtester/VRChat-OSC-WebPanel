@@ -40,11 +40,18 @@ export const VERBOSE = env.logging === 'true' && env.verbose === 'true';
 // **************************** ENVIRONMENT **************************** //
 
 // **************************** DIRECTORIES **************************** //
+// export const PLATFORM = os.platform();
 export const HOME_DIR = os.homedir();
-export const VRC_DIR = path.join(HOME_DIR, 'AppData', 'LocalLow', 'VRChat', 'VRChat'); // TODO: determine OS platform and corresponding DIRs automatically
+export const VRC_STORE_DIR = path.join(HOME_DIR, 'AppData', 'LocalLow', 'VRChat', 'VRChat'); // TODO: determine OS platform and corresponding DIRs automatically
+export const VRC_TEMP_DIR = path.join(HOME_DIR, 'AppData', 'Local', 'Temp', 'VRChat', 'VRChat'); // TODO: determine OS platform and corresponding DIRs automatically
 // **************************** DIRECTORIES **************************** //
 
 // **************************** ARCHIVED WIZARDRY **************************** //
+//		// Ultimately, either have the user hard-code their ID into .env, or open a selector based off the LocalAvatarData/OSC user_id's on the disk
+//		// There are 2 cache files in AppData/Local/Temp/VRChat/VRChat/ that store a lot of information about the client and currently signed in user.
+// 		// They seem to be written whenever an API request (like loading an avatar, world, signing in) is made, and dumped in their entirety when the game is closed.
+//		// During periods of time where no significant requests are made, the file is cleared
+//		// CLIENT COOKIES CANNOT MAKE API REQUESTS OUTSIDE OF THE CLIENT (YET)
 //      // NOTE: THIS METHOD >> DOES NOT WORK << WHEN THE USER IS SIGNED INTO A STEAM ACCOUNT... BUT WOULD YOU EVEN BE ABLE TO GET AN AUTHTOKEN WITH THAT ANYWAY?
 //      // NOTE: THIS METHOD >> DOES NOT WORK << WHEN THE USER DOESN'T HAVE 2FA :sob: EVEN IF THE USER USES 2FA SOMETIMES THE CLIENT DOESN'T PROMPT FOR 2FA AND THERE'S NO TOKEN FUCK
 //      const VRC_CLIENT_COOKIE_BINARY = fs.readFileSync(path.join(VRC_DIR, 'Cookies', 'Library'), 'binary');
@@ -60,11 +67,11 @@ export const VRC_DIR = path.join(HOME_DIR, 'AppData', 'LocalLow', 'VRChat', 'VRC
 export const VRC_USER_ID = env.vrchat_user_id;
 if (!VRC_USER_ID) throw new Error(chalk.bgRed(`[constants.ts] Value 'vrchat_user_id' not specified in .env`));
 
-export const VRC_AVI_STRUCTURE_DIR = path.join(VRC_DIR, 'OSC', VRC_USER_ID, 'Avatars'); // OSC for typemaps
+export const VRC_AVI_STRUCTURE_DIR = path.join(VRC_STORE_DIR, 'OSC', VRC_USER_ID, 'Avatars'); // OSC for typemaps
 if (!fs.existsSync(VRC_AVI_STRUCTURE_DIR))
 	throw new Error(chalk.bgRed(`[constants.ts] Directory ${VRC_AVI_STRUCTURE_DIR} does not exist.`));
 
-export const VRC_AVI_DATA_DIR = path.join(VRC_DIR, 'LocalAvatarData', VRC_USER_ID); // LocalAvatarData for actual values
+export const VRC_AVI_DATA_DIR = path.join(VRC_STORE_DIR, 'LocalAvatarData', VRC_USER_ID); // LocalAvatarData for actual values
 if (!fs.existsSync(VRC_AVI_DATA_DIR))
 	throw new Error(chalk.bgRed(`[constants.ts] Directory ${VRC_AVI_DATA_DIR} does not exist.`));
 // **************************** USED ONLY TO FIND CURRENT USER ID SIGNED INTO THE GAME **************************** //
