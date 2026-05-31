@@ -186,3 +186,9 @@ export async function GetAvatarDetails(
 		return;
 	}
 }
+
+export async function GetUserDetails() {
+	// TODO: fs.watch
+}
+
+// TODO: GUI stuff?
