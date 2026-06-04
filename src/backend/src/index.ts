@@ -39,7 +39,7 @@ import path from 'node:path';
 import { VRC_TEMP_DIR } from './constants.ts';
 import type { $AmplitudeCache, $AmplitudeSettings } from './types_amplitude.ts';
 
-export const AmplitudeStore
+export const AmplitudeCache: $AmplitudeCache = [];
 
 const AmplitudeWatcher = fs.watch(VRC_TEMP_DIR, (event, filename) => {
 	console.log(event, filename);
@@ -54,19 +54,19 @@ const AmplitudeWatcher = fs.watch(VRC_TEMP_DIR, (event, filename) => {
 						if (stat.size <= 2) return;
 						const amplitude_cache: $AmplitudeCache = JSON.parse(data);
 						console.log('CAHE:', amplitude_cache);
+						console.log(amplitude_cache.pop()?.user_properties.currentAvatarId);
 						return;
 					}
-					case 'amplitude.cache': {
+					case 'com_settings.amplitude': {
 						// if (stat.size <= 2) return;
 						const amplitude_settings: $AmplitudeSettings = JSON.parse(data);
 						console.log('SETTINGS:', amplitude_settings);
 						return;
 					}
 					default: {
-
 					}
 				}
-			} catch { }
+			} catch {}
 		}
 	}
 });

@@ -48,9 +48,9 @@ export class VRChatOSCRouter extends VRChatOSCInterface {
 	}
 
 	UnRoute(pattern: string, app: $VRChatOSCRouterExternalApplication) {
-		// const app_hash = MD5(app);
-		// const callback = this.callback_by_app_hash.get(app_hash);
-		// if (!callback) return;
-		// this.RemoveMessageListener(pattern, callback);
+		const app_hash = MD5(app);
+		const forwarder = this.forwarder_by_app_hash.get(app_hash);
+		if (!forwarder) return;
+		this.RemoveMessageListener(pattern, forwarder);
 	}
 }

@@ -4,7 +4,7 @@ import globals from 'globals';
 
 export default [
 	{
-		files: ['**/*.ts'],
+		files: ['src/backend/src/*.ts', 'src/frontend/src/**/*.ts'],
 		languageOptions: {
 			parser: tsparser,
 			ecmaVersion: 'latest',

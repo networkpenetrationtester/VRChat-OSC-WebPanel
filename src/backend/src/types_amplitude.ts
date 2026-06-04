@@ -1,4 +1,9 @@
 // **************************** VRCHAT AMPLITUDE CACHE **************************** //
+export interface $AmplitudeIPSCategoryWeights {
+	category: string;
+	weight: number;
+}
+
 export interface $AmplitudeUserProperties {
 	'acceptedTOSVersion': number;
 	'accountType': string;
@@ -29,7 +34,7 @@ export interface $AmplitudeUserProperties {
 	'inputMethod': string;
 	'inputType': string;
 	'inVRMode': boolean;
-	'ips_category_weights': { category: string; weight: number }[];
+	'ips_category_weights': [];
 	'ips_segment': string;
 	'IsNvidiaGeForceNow': boolean;
 	'isOnMeteredConnection': boolean;
