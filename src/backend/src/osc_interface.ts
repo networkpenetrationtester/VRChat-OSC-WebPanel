@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import chalk from 'chalk';
 import * as OSC from 'node-osc';
 import dgram from 'dgram';
 import { MD5 } from 'object-hash';
@@ -10,6 +9,11 @@ import {
 	AvatarStructureLoader,
 	GenerateAvatarTypeMap,
 	LoadLastAvatar,
+	LogDownlink,
+	LogError,
+	LogInfo,
+	LogUplink,
+	LogWarn,
 	SaveLastAvatar,
 	TryParse
 } from './modules.ts';
@@ -28,74 +32,87 @@ export class VRChatOSCInterface extends MessageListener {
 	protected server!: OSC.Server;
 	protected client!: dgram.Socket;
 	protected config!: $VRChatOSCInterfaceConfiguration;
+	protected _avatar: $VRChatOSCInterfaceCurrentAvatar;
 
-	readonly avatar: $VRChatOSCInterfaceCurrentAvatar;
+	get avatar() {
+		return this._avatar;
+	}
 
 	constructor(config?: $VRChatOSCInterfaceConfiguration) {
 		super();
 
-		config && (this.config = config);
+		if (config) this.config = config;
 
 		const last_avatar = LoadLastAvatar();
 
-		this.avatar = last_avatar
+		this._avatar = last_avatar
 			? { ...last_avatar, typemap: GenerateAvatarTypeMap(last_avatar.structure) }
 			: { data: undefined, structure: undefined, typemap: GenerateAvatarTypeMap() };
 
-		this.AddMessageListener('/avatar/change', (src, match, args) => {
-			const [avi_id] = JSON.stringify(args[0]);
-			this.avatar.structure = AvatarStructureLoader(VRC_AVI_STRUCTURE_DIR, avi_id);
-			this.avatar.data = AvatarDataLoader(VRC_AVI_DATA_DIR, avi_id);
-			this.avatar.typemap = GenerateAvatarTypeMap(this.avatar.structure);
-			SaveLastAvatar(this.avatar);
+		this.AddMessageListener('/avatar/change', (src, map, address, ...values) => {
+			const [avi_id] = values;
+
+			this._avatar.structure = AvatarStructureLoader(VRC_AVI_STRUCTURE_DIR, avi_id);
+			this._avatar.data = AvatarDataLoader(VRC_AVI_DATA_DIR, avi_id);
+			this._avatar.typemap = GenerateAvatarTypeMap(this._avatar.structure);
+
+			SaveLastAvatar(this._avatar);
+
+			return;
 		});
 	}
 
 	Create(config?: $VRChatOSCInterfaceConfiguration) {
 		if (config) this.config = config;
-
-		if (!this.config) {
-			console.log(chalk.bgYellow(`[OSC_INTF] Interface configuration empty.`));
-			return;
-		}
-
+		if (!this.config) return LogWarn(`[OSC_INTF] Interface configuration empty.`);
 		if (this.init) this.Destroy();
 
 		this.client = dgram.createSocket('udp4').bind(this.config.VRC_RX_PORT, this.config.INTERFACE_ADDRESS, () => {
-			console.log(chalk.bgBlue(`[OSC_INTF] Client sending to ${INTERFACE_ADDRESS}:${this.config.VRC_RX_PORT}...`));
+			LogInfo(`[OSC_INTF] Client sending to ${INTERFACE_ADDRESS}:${this.config.VRC_RX_PORT}...`);
 		});
 
 		this.client.on('close', () => {
-			this.init = false;
-			console.log(chalk.bgYellow('[OSC_INTF] Client closed.'));
+			this.Destroy();
+			LogWarn('[OSC_INTF] Client closed.');
 		});
 
 		this.server = new OSC.Server(this.config.VRC_TX_PORT, this.config.INTERFACE_ADDRESS, () => {
-			console.log(chalk.bgBlue(`[OSC_INTF] Server listening on ${INTERFACE_ADDRESS}:${this.config.VRC_TX_PORT}...`));
+			LogInfo(`[OSC_INTF] Server listening on ${INTERFACE_ADDRESS}:${this.config.VRC_TX_PORT}...`);
 		});
 
 		this.server.on('message', (...args) => {
 			const [data, ...debug] = args;
 			const [address, ...values] = data;
-			VERBOSE && console.log(chalk.bgBlack.green('⬇ [VRChat => OSC_INTF]'), debug);
-			LOGGING && console.log(chalk.bgBlack.green('⬇ [VRChat => OSC_INTF]'), chalk.yellow(address), values);
+
+			if (VERBOSE) LogDownlink('VRChat => OSC_INTF', 'Debug', ...debug);
+			if (LOGGING) LogDownlink('VRChat => OSC_INTF', address, ...values);
+
 			this.HandleData(this, address, ...values);
-			this.unacknowledged.size > 0 && this.SetAcknowledged(MD5({ address, values }));
+
+			if (this.unacknowledged.size > 0) {
+				const hash = MD5({ address, values });
+				this.SetAcknowledged(hash);
+			}
 		});
 
 		this.server.on('close', () => {
-			this.init = false;
-			console.log(chalk.bgYellow('[OSC_INTF] Server closed.'));
+			this.Destroy();
+			LogWarn('[OSC_INTF] Server closed.');
 		});
+
+		this.init = false;
 
 		return this;
 	}
 
 	Destroy() {
-		if (!this.init) return console.log(chalk.bgRed('[OSC_INTF] Interface not initialized.'));
+		if (!this.init) LogWarn('[OSC_INTF] Interface not initialized.');
+
 		this.server.close();
 		this.client.close();
+
 		this.init = false;
+
 		return this;
 	}
 
@@ -103,62 +120,56 @@ export class VRChatOSCInterface extends MessageListener {
 		return this.unacknowledged;
 	}
 
-	GetAvatar() {
-		return this.avatar;
-	}
-
 	private SetAcknowledged(hash: string) {
 		const resolve = this.unacknowledged.get(hash);
+
 		resolve?.(true) && this.unacknowledged.delete(hash);
+
 		return this.unacknowledged;
 	}
 
 	private SetUnacknowledged(hash: string, resolve: (value: boolean) => void) {
 		this.unacknowledged.set(hash, resolve);
+
 		return this.unacknowledged;
 	}
 
 	private RemoveUnacknowledged(hash: string) {
 		this.unacknowledged.delete(hash);
+
 		return this.unacknowledged;
 	}
 
 	async SendValueAcknowledged(address: string, ...values: any[]): Promise<boolean> {
 		const ack = await this.SendValue(address, ...values);
-		const bgBlack = chalk.bgBlack;
-		LOGGING &&
-			console.log(
-				ack
-					? bgBlack.green('⬇ [VRChat => OSC_INTF] Message acknowledged.')
-					: bgBlack.red('⬇ [VRChat => OSC_INTF] Message unacknowledged.')
-			);
+
+		if (ack) LogDownlink('VRChat => OSC_INTF', 'ACKNOWLEDGED');
+		else LogDownlink('VRChat => OSC_INTF', 'UNACKNOWLEDGED');
+
 		return ack;
 	}
 
 	async SendValue(address: string, ...values: any[]): Promise<boolean> {
 		values = TryParse(...values);
 
-		if (values.length === 0) {
-			console.log(chalk.bgRed(`[SendValue] Aborted sending <empty>.`));
-			return false;
-		}
-
-		this.unacknowledged.size >= 1024 && this.unacknowledged.shift();
+		if (values.length === 0) return false && LogError(`[SendValue] Aborted sending <empty>.`);
+		if (this.unacknowledged.size >= 1024) this.unacknowledged.shift();
 
 		const msg = new OSC.Message(address, ...values);
 		const packet = OSC.encode(msg);
 
 		this.client.send(packet, this.config.VRC_RX_PORT, this.config.VRC_ADDRESS);
 
-		LOGGING && console.log(chalk.bgBlack.green('⬆ [OSC_INTF => VRChat]'), chalk.yellow(address), values);
+		if (LOGGING) LogUplink('OSC_INTF => VRChat', address, ...values);
 
 		return new Promise(resolve => {
 			const hash = MD5({ address, values });
+			console.log(hash);
 			this.SetUnacknowledged(hash, resolve);
 			setTimeout(() => {
 				// this.RemoveUnacknowledged(hash);
 				resolve(false);
-			}, 1000 * 0.01);
+			}, 10);
 			// ~64 requests/ms (6.4k/s) can be made to a loopback in optimal conditions
 			// 10 ms given: ~640 messages can be recieved in this duration
 		});
