@@ -7,6 +7,7 @@ import * as OSC from 'node-osc';
 import { VRChatOSCInterface } from './osc_interface.ts';
 import { LOGGING } from './constants.ts';
 import type { $VRChatOSCInterfaceMessageCallback } from './osc_interface.ts';
+import { LogUplink } from './modules.ts';
 
 export class VRChatOSCRouter extends VRChatOSCInterface {
 	protected forwarder_by_app_hash = new LazyMap<string, $VRChatOSCInterfaceMessageCallback>();
@@ -20,24 +21,22 @@ export class VRChatOSCRouter extends VRChatOSCInterface {
 		let forwarder = this.forwarder_by_app_hash.get(app_hash);
 
 		if (!forwarder) {
-			// TODO: STANDARDIZE THIS LOGGING.
 			forwarder = this.forwarder_by_app_hash.setAndReturnValue(app_hash, (src, map, address, ...values) => {
 				const msg = new OSC.Message(address, ...values);
 				const packet = OSC.encode(msg);
+
 				this.client.send(packet, app.port, app.address, err => {
 					if (err) {
-						console.log(
-							chalk.bgBlack.red(
-								`⬆ [OSC_RTR => ${app.address}:${app.port}${app.name ? [' (', ')'].join(app.name) : ''}] Failed to forward values. ${err}`
-							)
+						LogUplink(
+							`OSC_RTR => ${app.address}:${app.port}${app.name ? [' (', ')'].join(app.name) : ''}`,
+							'Failed to forward values.',
+							err
 						);
 					} else if (LOGGING) {
-						console.log(
-							chalk.bgBlack.blue(
-								`⬆ [OSC_RTR => ${app.address}:${app.port}${app.name ? [' (', ')'].join(app.name) : ''}]`
-							),
-							chalk.yellow(address),
-							values
+						LogUplink(
+							`OSC_RTR => ${app.address}:${app.port}${app.name ? [' (', ')'].join(app.name) : ''}`,
+							address,
+							...values
 						);
 					}
 				});
