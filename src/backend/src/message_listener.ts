@@ -13,20 +13,20 @@ import type {
 export class MessageListener {
 	protected pmc_by_hash = new LazyMap<string, $MessageListenerPMCObject>();
 	protected matcher_by_pattern = new LazyMap<string, $PathToRegExpMatcher>();
-
 	protected known_addresses = new Array<string>();
 	protected pmc_checks_by_address = new LazyMap<string, Array<$MessageListenerPMCObject>>();
 	protected pmc_cache_by_address = new LazyMap<string, Array<[string, $PathToRegExpResult]>>();
 
 	HandleData(src: any, address: string, ...values: any[]) {
-		!this.known_addresses.includes(address) && this.known_addresses.push(address);
+		if (!this.known_addresses.includes(address)) this.known_addresses.push(address);
 
 		const pmc_cache =
 			this.pmc_cache_by_address.get(address) ?? this.pmc_cache_by_address.setAndReturnValue(address, new Array());
 
 		for (const caught of pmc_cache) {
 			const [caught_hash, caught_match] = caught;
-			caught_match &&
+
+			if (caught_match)
 				this.pmc_by_hash.get(caught_hash)?.callback(src, PathToRegExpMatchToMap(caught_match), address, ...values);
 		}
 
@@ -38,22 +38,23 @@ export class MessageListener {
 			for (const pmc_check of pmc_checks) {
 				const { matcher, callback } = pmc_check;
 				const match = matcher(address);
+
 				if (match) {
 					callback(src, PathToRegExpMatchToMap(match), address, ...values);
 					pmc_cache.push([MD5(pmc_check), match]);
 				}
+
 				pmc_checks = pmc_checks.slice(1);
 			}
+
 			this.pmc_checks_by_address.set(address, pmc_checks);
 		}
 	}
 
 	AddMessageListener(pattern: string, callback: $MessageListenerCallback<any>) {
 		const matcher = this.matcher_by_pattern.trySetAndReturnValue(pattern, match(pattern));
-
 		const ref_pmc = { pattern, matcher, callback };
 		const ref_hash = MD5(ref_pmc);
-
 		let pmc = this.pmc_by_hash.get(ref_hash);
 
 		if (!pmc) {
@@ -61,8 +62,10 @@ export class MessageListener {
 
 			for (const address of this.known_addresses) {
 				let pmc_checks = this.pmc_checks_by_address.get(address);
+
 				pmc_checks ??= [];
 				pmc_checks.push(pmc);
+
 				this.pmc_checks_by_address.set(address, pmc_checks);
 			}
 		}
@@ -70,31 +73,32 @@ export class MessageListener {
 
 	RemoveMessageListener(pattern: string, callback: $MessageListenerCallback<any>) {
 		const matcher = this.matcher_by_pattern.get(pattern);
+
 		if (!matcher) return;
 
 		const ref_pmc = { pattern, matcher, callback };
 		const ref_hash = MD5(ref_pmc);
-
 		const pmc = this.pmc_by_hash.get(ref_hash);
 
 		if (pmc) {
 			for (const address of this.known_addresses) {
 				const pmc_checks = this.pmc_checks_by_address.get(address);
-				if (pmc_checks) {
+
+				if (pmc_checks)
 					this.pmc_checks_by_address.set(
 						address,
 						pmc_checks.filter(pmc_check => pmc_check !== pmc)
 					);
-				}
 
 				const cache = this.pmc_cache_by_address.get(address);
-				if (cache) {
+
+				if (cache)
 					this.pmc_cache_by_address.set(
 						address,
 						cache.filter(caught => this.pmc_by_hash.get(caught[0]) !== pmc)
 					);
-				}
 			}
+
 			this.pmc_by_hash.delete(ref_hash);
 			// We do NOT want to delete matcher_by_pattern.
 		}
