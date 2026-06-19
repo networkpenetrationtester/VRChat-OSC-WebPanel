@@ -1,39 +1,36 @@
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
+import { existsSync } from 'fs';
+import { homedir } from 'os';
+import { dirname, join } from 'path';
 import { env } from 'process';
-import chalk from 'chalk';
 import { config } from 'dotenv';
+import { ColorError, LogInfo, LogWarn } from './modules.ts';
 
 // **************************** ENVIRONMENT **************************** //
 export function GetProjectRoot(start_cwd: string) {
-	if (fs.existsSync(path.join(start_cwd, 'package.json'))) return start_cwd;
+	if (existsSync(join(start_cwd, 'package.json'))) return start_cwd;
+
 	for (
-		let prev_cwd = start_cwd, curr_cwd = path.dirname(start_cwd);
+		let prev_cwd = start_cwd, curr_cwd = dirname(start_cwd);
 		curr_cwd != prev_cwd;
-		prev_cwd = curr_cwd, curr_cwd = path.dirname(curr_cwd)
+		prev_cwd = curr_cwd, curr_cwd = dirname(curr_cwd)
 	) {
-		if (fs.existsSync(path.join(curr_cwd, 'package.json'))) return curr_cwd;
+		if (existsSync(join(curr_cwd, 'package.json'))) return curr_cwd;
 	}
-	return undefined;
 }
 
 const cwd = import.meta.dirname; // process.cwd(); for an .env inside the root of another project
 const root = GetProjectRoot(cwd);
 
-console.log(
-	typeof root === 'string'
-		? chalk.bgGreen(`[constants.ts] Found project root '${root}'.`)
-		: chalk.bgYellow(`[constants.ts] Failed to recursively find project root of '${cwd}'.`)
-);
+if (typeof root === 'string') LogInfo(`[constants.ts] Found project root '${root}'.`);
+else LogWarn(`[constants.ts] Failed to recursively find project root of '${cwd}'.`);
 
-export const PROJECT_ROOT = root ?? path.dirname(import.meta.dirname);
+export const PROJECT_ROOT = root ?? dirname(import.meta.dirname);
 
-config({ path: path.join(PROJECT_ROOT, '.env'), quiet: false });
+config({ path: join(PROJECT_ROOT, '.env'), quiet: false });
 
 export const VRC_ADDRESS = env.vrchat_address ?? 'localhost';
-export const VRC_RX_PORT = Number(env.vrchat_recieve_port ?? '9000'); // VRC <- INTF
-export const VRC_TX_PORT = Number(env.vrchat_transmit_port ?? '9001'); // VRC -> INTF
+export const VRC_RX_PORT = parseInt(env.vrchat_recieve_port ?? '9000'); // VRC <- INTF
+export const VRC_TX_PORT = parseInt(env.vrchat_transmit_port ?? '9001'); // VRC -> INTF
 export const INTERFACE_ADDRESS = env.interface_address ?? 'localhost';
 export const LOGGING = env.logging === 'true';
 export const VERBOSE = env.logging === 'true' && env.verbose === 'true';
@@ -41,9 +38,9 @@ export const VERBOSE = env.logging === 'true' && env.verbose === 'true';
 
 // **************************** DIRECTORIES **************************** //
 // export const PLATFORM = os.platform();
-export const HOME_DIR = os.homedir();
-export const VRC_STORE_DIR = path.join(HOME_DIR, 'AppData', 'LocalLow', 'VRChat', 'VRChat'); // TODO: determine OS platform and corresponding DIRs automatically
-export const VRC_TEMP_DIR = path.join(HOME_DIR, 'AppData', 'Local', 'Temp', 'VRChat', 'VRChat'); // TODO: determine OS platform and corresponding DIRs automatically
+export const HOME_DIR = homedir();
+export const VRC_STORE_DIR = join(HOME_DIR, 'AppData', 'LocalLow', 'VRChat', 'VRChat'); // TODO: determine OS platform and corresponding DIRs automatically
+export const VRC_TEMP_DIR = join(HOME_DIR, 'AppData', 'Local', 'Temp', 'VRChat', 'VRChat'); // TODO: determine OS platform and corresponding DIRs automatically
 // **************************** DIRECTORIES **************************** //
 
 // **************************** ARCHIVED WIZARDRY **************************** //
@@ -65,33 +62,28 @@ export const VRC_TEMP_DIR = path.join(HOME_DIR, 'AppData', 'Local', 'Temp', 'VRC
 
 // **************************** USED ONLY TO FIND CURRENT USER ID SIGNED INTO THE GAME **************************** //
 export const VRC_USER_ID = env.vrchat_user_id;
-if (!VRC_USER_ID) throw new Error(chalk.bgRed(`[constants.ts] Value 'vrchat_user_id' not specified in .env`));
+if (!VRC_USER_ID) throw new Error(ColorError(`[constants.ts] Value 'vrchat_user_id' not specified in .env`));
 
-export const VRC_AVI_STRUCTURE_DIR = path.join(VRC_STORE_DIR, 'OSC', VRC_USER_ID, 'Avatars'); // OSC for typemaps
-if (!fs.existsSync(VRC_AVI_STRUCTURE_DIR))
-	throw new Error(chalk.bgRed(`[constants.ts] Directory ${VRC_AVI_STRUCTURE_DIR} does not exist.`));
+export const VRC_AVI_STRUCTURE_DIR = join(VRC_STORE_DIR, 'OSC', VRC_USER_ID, 'Avatars'); // OSC for typemaps
+if (!existsSync(VRC_AVI_STRUCTURE_DIR))
+	throw new Error(ColorError(`[constants.ts] Directory ${VRC_AVI_STRUCTURE_DIR} does not exist.`));
 
-export const VRC_AVI_DATA_DIR = path.join(VRC_STORE_DIR, 'LocalAvatarData', VRC_USER_ID); // LocalAvatarData for actual values
-if (!fs.existsSync(VRC_AVI_DATA_DIR))
-	throw new Error(chalk.bgRed(`[constants.ts] Directory ${VRC_AVI_DATA_DIR} does not exist.`));
+export const VRC_AVI_DATA_DIR = join(VRC_STORE_DIR, 'LocalAvatarData', VRC_USER_ID); // LocalAvatarData for actual values
+if (!existsSync(VRC_AVI_DATA_DIR))
+	throw new Error(ColorError(`[constants.ts] Directory ${VRC_AVI_DATA_DIR} does not exist.`));
 // **************************** USED ONLY TO FIND CURRENT USER ID SIGNED INTO THE GAME **************************** //
 
 // **************************** USED ONLY TO PERFORM STATELESS API REQUESTS **************************** //
 export const VRC_API_COOKIE_AUTH = env.vrchat_cookie_auth;
 if (!VRC_API_COOKIE_AUTH)
-	console.log(
-		chalk.bgYellow(`[constants.ts] Value 'vrchat_cookie_auth' not specified in .env (Disabling API features)`)
-	);
+	LogWarn(`[constants.ts] Value 'vrchat_cookie_auth' not specified in .env (Disabling API features)`);
 
 export const VRC_API_COOKIE_2FA = env.vrchat_cookie_twoFactorAuth;
 if (!VRC_API_COOKIE_2FA)
-	console.log(
-		chalk.bgYellow(
-			`[constants.ts] Value 'vrchat_cookie_twoFactorAuth' not specified in .env (May cause API authentication failure)`
-		)
+	LogWarn(
+		`[constants.ts] Value 'vrchat_cookie_twoFactorAuth' not specified in .env (May cause API authentication failure)`
 	);
 
 export const USE_API_FEATURES = VRC_API_COOKIE_AUTH != null && env.use_api_features === 'true';
-
 export const VRC_API_COOKIE = { auth: VRC_API_COOKIE_AUTH, twoFactorAuth: VRC_API_COOKIE_2FA };
 // **************************** USED ONLY TO PERFORM STATELESS API REQUESTS **************************** //
