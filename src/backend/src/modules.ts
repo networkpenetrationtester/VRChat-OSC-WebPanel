@@ -1,7 +1,7 @@
-import fs from 'fs';
-import path from 'path';
 import chalk from 'chalk';
-import rl from 'readline';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import { createInterface } from 'readline';
 import { LazyMap } from './lazymap.ts';
 import { PROJECT_ROOT } from './constants.ts';
 import type { ReadLineOptions } from 'readline';
@@ -15,16 +15,51 @@ import type {
 	$VRChatOSCInterfaceCurrentAvatar
 } from './types.ts';
 
+export function LogUplink(tag: string, address: string, ...values: unknown[]) {
+	console.log(chalk.hex('#00ff00')(`⬆ [${tag}]`), chalk.yellow(address), ...values);
+}
+
+export function LogDownlink(tag: string, address: string, ...values: unknown[]) {
+	console.log(chalk.hex('#ff0000')(`⬇ [${tag}]`), chalk.yellow(address), ...values);
+}
+
+export function ColorError(value: unknown) {
+	return chalk.hex('#ff00ff')(value);
+}
+
+export function ColorWarn(value: unknown) {
+	return chalk.hex('#ffff00')(value);
+}
+
+export function ColorInfo(value: unknown) {
+	return chalk.hex('#00ffff')(value);
+}
+
+export function LogError(...args: unknown[]) {
+	const colored_args = args.map(arg => ColorError(arg));
+	console.log(...colored_args);
+}
+
+export function LogWarn(...args: unknown[]) {
+	const colored_args = args.map(arg => ColorWarn(arg));
+	console.log(...colored_args);
+}
+
+export function LogInfo(...args: unknown[]) {
+	const colored_args = args.map(arg => ColorInfo(arg));
+	console.log(...colored_args);
+}
+
 export function TryParse(...values: unknown[]) {
 	try {
-		if (!values) throw new Error('Value empty');
+		if (values.length === 0) throw 'no values';
 
 		values = values.map(value => {
 			if (value) {
 				const value_stringified = new String(value).toString() ?? '';
 				const [v, explicit_type] = [value_stringified.slice(0, -1), value_stringified.at(value_stringified.length - 1)];
-
 				const is_bool = ['true', 'false'].includes(value_stringified);
+
 				if (is_bool) return { true: 1, false: 0 }[value_stringified];
 
 				const v_int = parseInt(value_stringified);
@@ -46,21 +81,21 @@ export function TryParse(...values: unknown[]) {
 				if (!isNaN(v_int) && v_int.toString() === value_stringified) return v_int;
 				if (!isNaN(v_float)) return Math.fround(v_float + (v_float == Math.trunc(v_float) ? Math.random() / 100 : 0));
 
-				throw new Error('Failed guess parse');
+				throw 'failed guess parse';
 			} else {
-				throw new Error('Value(s) empty');
+				throw 'at least one value empty';
 			}
 		});
-		console.log(values);
+
 		return values;
 	} catch (e) {
-		console.log(chalk.bgRed(`[TryParse] Failed to parse '${JSON.stringify(values)}'. (${e})`));
+		console.error(ColorError(`[TryParse] Failed to parse '${JSON.stringify(values)}'. (${e})`));
 		return [];
 	}
 }
 
 export function STDIO(options?: ReadLineOptions) {
-	return rl.createInterface({ ...options, input: process.stdin, output: process.stdout });
+	return createInterface({ ...options, input: process.stdin, output: process.stdout });
 }
 
 export function RemoveUTF8BOM(data: string) {
@@ -80,56 +115,56 @@ export function PathToRegExpMatchToMap(match: $PathToRegExpResult) {
 }
 
 export function AvatarStructureLoader(VRC_AVI_OSC_DIR: string, avi_id: string): $VRChatAvatarStructure | undefined {
-	const avi_osc_path = path.join(VRC_AVI_OSC_DIR, avi_id + '.json');
+	const avi_osc_path = join(VRC_AVI_OSC_DIR, avi_id + '.json');
 
-	if (!fs.existsSync(avi_osc_path)) {
-		console.log(chalk.bgYellow(`[AvatarStructureLoader] Failed to locate file '${avi_osc_path}'.`));
+	if (!existsSync(avi_osc_path)) {
+		LogWarn(`[AvatarStructureLoader] Failed to locate file '${avi_osc_path}'.`);
 		return;
 	}
 
 	try {
-		return JSON.parse(RemoveUTF8BOM(fs.readFileSync(avi_osc_path, 'utf8')));
+		return JSON.parse(RemoveUTF8BOM(readFileSync(avi_osc_path, 'utf8')));
 	} catch (e) {
-		console.log(chalk.bgRed(`[AvatarStructureLoader] Failed to parse '${avi_osc_path}'. (${e})`));
+		LogError(`[AvatarStructureLoader] Failed to parse '${avi_osc_path}'. (${e})`);
 		return;
 	}
 }
 
 export function AvatarDataLoader(VRC_AVI_DATA_DIR: string, avi_id: string): $VRChatAvatarData | undefined {
-	const avi_data_path = path.join(VRC_AVI_DATA_DIR, avi_id);
+	const avi_data_path = join(VRC_AVI_DATA_DIR, avi_id);
 
-	if (!fs.existsSync(avi_data_path)) {
-		console.log(chalk.bgYellow(`[AvatarDataLoader] Failed to locate file '${avi_data_path}'.`));
+	if (!existsSync(avi_data_path)) {
+		LogWarn(`[AvatarDataLoader] Failed to locate file '${avi_data_path}'.`);
 		return;
 	}
 
 	try {
-		return JSON.parse(RemoveUTF8BOM(fs.readFileSync(avi_data_path, 'utf8')));
+		return JSON.parse(RemoveUTF8BOM(readFileSync(avi_data_path, 'utf8')));
 	} catch (e) {
-		console.log(chalk.bgRed(`[AvatarStructureLoader] Failed to parse '${avi_data_path}'. (${e})`));
+		LogError(`[AvatarStructureLoader] Failed to parse '${avi_data_path}'. (${e})`);
 		return;
 	}
 }
 
 export function LoadLastAvatar(): { structure: $VRChatAvatarStructure; data: $VRChatAvatarData } | undefined {
-	const last_avi_path = path.join(PROJECT_ROOT, 'last.json');
+	const last_avi_path = join(PROJECT_ROOT, 'last.json');
 
-	if (!fs.existsSync(last_avi_path)) {
-		console.log(chalk.bgYellow(`[LoadLastAvatar] Failed to locate '${last_avi_path}'.`));
+	if (!existsSync(last_avi_path)) {
+		LogWarn(`[LoadLastAvatar] Failed to locate '${last_avi_path}'.`);
 		return;
 	}
 
 	try {
-		return JSON.parse(fs.readFileSync(last_avi_path, 'utf8'));
+		return JSON.parse(readFileSync(last_avi_path, 'utf8'));
 	} catch (e) {
-		console.log(chalk.bgRed(`[LoadLastAvatar] Failed to parse '${last_avi_path}'. (${e})`));
+		LogError(`[LoadLastAvatar] Failed to parse '${last_avi_path}'. (${e})`);
 		return;
 	}
 }
 
 export function SaveLastAvatar(avatar: $VRChatOSCInterfaceCurrentAvatar) {
 	const { structure, data } = avatar;
-	fs.writeFileSync(path.join(PROJECT_ROOT, 'last.json'), JSON.stringify({ structure, data }));
+	writeFileSync(join(PROJECT_ROOT, 'last.json'), JSON.stringify({ structure, data }));
 }
 
 export function GenerateAvatarTypeMap(vrc_avi_structure?: $VRChatAvatarStructure): $VRChatOSCInterfaceAvatarTypeMap {
@@ -153,12 +188,11 @@ export async function GetAvatarDetails(
 	getListingData = false
 ): Promise<$VRChatAPIAvatarData | undefined> {
 	if (!cookie.auth) {
-		console.log(chalk.bgRed(`[GetAvatarDetails] Failed because 'auth' was not specified.`));
+		LogError(`[GetAvatarDetails] Failed because 'auth' was not specified.`);
 		return;
 	}
-	if (!cookie.twoFactorAuth) {
-		console.log(chalk.bgYellow(`[GetAvatarDetails] May fail because 'twoFactorAuth' was not specified.`));
-	}
+
+	if (!cookie.twoFactorAuth) LogWarn(`[GetAvatarDetails] May fail because 'twoFactorAuth' was not specified.`);
 
 	try {
 		return await fetch(`https://api.vrchat.cloud/api/1/avatars/${avi_id}?getListingData=${getListingData}`, {
@@ -182,7 +216,7 @@ export async function GetAvatarDetails(
 			method: 'GET'
 		}).then(r => r.json());
 	} catch (e) {
-		console.log(chalk.bgRed(`[GetAvatarDetails] Failed to fetch. (${e})`));
+		LogError(`[GetAvatarDetails] Failed to fetch. (${e})`);
 		return;
 	}
 }
