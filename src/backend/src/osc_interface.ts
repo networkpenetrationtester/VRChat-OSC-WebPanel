@@ -164,7 +164,6 @@ export class VRChatOSCInterface extends MessageListener {
 
 		return new Promise(resolve => {
 			const hash = MD5({ address, values });
-			console.log(hash);
 			this.SetUnacknowledged(hash, resolve);
 			setTimeout(() => {
 				// this.RemoveUnacknowledged(hash);
